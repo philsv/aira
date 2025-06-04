@@ -13,6 +13,7 @@ from ..models.documents import (
     QuestionResponse,
 )
 from ..services import DocumentService, QAService
+from ..services.langsmith_setup import setup_langsmith
 
 # Network configuration
 UVICORN_HOST = os.getenv("UVICORN_HOST", "0.0.0.0")
@@ -27,6 +28,10 @@ async def lifespan(app: FastAPI):
     document_service.documents_db = {
         doc.id: doc for doc in await document_service.get_all_documents()
     }
+    # Initialize LangSmith if configured
+    if os.getenv("LANGSMITH_API_KEY"):
+        setup_langsmith()
+        logger.info("LangSmith initialized successfully")
     yield
     # Shutdown (if needed)
 

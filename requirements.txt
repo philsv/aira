@@ -53,6 +53,7 @@ httptools==0.6.4
     # via uvicorn
 httpx==0.28.1
     # via
+    #   langsmith
     #   openai
     #   qdrant-client
 hyperframe==6.1.0
@@ -70,6 +71,8 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
+langsmith==0.3.44
+    # via -r requirements.in
 mypy==1.16.0
     # via -r requirements.in
 mypy-extensions==1.1.0
@@ -78,8 +81,12 @@ numpy==2.2.6
     # via qdrant-client
 openai==1.84.0
     # via -r requirements.in
+orjson==3.10.18
+    # via langsmith
 packaging==25.0
-    # via pytest
+    # via
+    #   langsmith
+    #   pytest
 pathspec==0.12.1
     # via mypy
 pdfminer-six==20250327
@@ -102,6 +109,7 @@ pydantic==2.11.5
     # via
     #   -r requirements.in
     #   fastapi
+    #   langsmith
     #   openai
     #   pydantic-settings
     #   qdrant-client
@@ -137,7 +145,12 @@ qdrant-client==1.14.2
 regex==2024.11.6
     # via tiktoken
 requests==2.32.3
-    # via tiktoken
+    # via
+    #   langsmith
+    #   requests-toolbelt
+    #   tiktoken
+requests-toolbelt==1.0.0
+    # via langsmith
 s3transfer==0.13.0
     # via boto3
 six==1.17.0
@@ -183,3 +196,5 @@ watchfiles==1.0.5
     # via uvicorn
 websockets==15.0.1
     # via uvicorn
+zstandard==0.23.0
+    # via langsmith

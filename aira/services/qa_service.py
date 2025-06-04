@@ -6,6 +6,8 @@ from datetime import datetime
 from typing import Optional
 
 import openai
+from langsmith.wrappers import wrap_openai
+from langsmith import traceable
 
 from ..models.documents import (
     FeedbackRequest,
@@ -18,9 +20,12 @@ from .qdrant_service import Qdrant
 XAI_API_KEY = os.getenv("XAI_API_KEY")
 XAI_MODEL = os.getenv("XAI_MODEL", "grok-3-mini")
 
-client = openai.AsyncOpenAI(
-    base_url="https://api.x.ai/v1",
-    api_key=XAI_API_KEY,
+# Wrap the async OpenAI client for LangSmith tracing
+client = wrap_openai(
+    openai.AsyncOpenAI(
+        base_url="https://api.x.ai/v1",
+        api_key=XAI_API_KEY,
+    )
 )
 
 
@@ -30,6 +35,7 @@ class QAService:
         self.feedback_db = {}  # Store feedback
 
     @staticmethod
+    @traceable(name="send_request_to_xai")
     async def send_request(sem: Semaphore, question: str, search_results: str):
         """Send a single request to xAI with semaphore control."""
         async with sem:
@@ -50,8 +56,16 @@ class QAService:
                         """,
                     },
                 ],
+                # Add metadata for LangSmith tracking
+                extra_body={
+                    "metadata": {
+                        "question": question,
+                        "context_length": len(search_results),
+                    }
+                },
             )
 
+    @traceable(name="process_multiple_requests")
     async def process_requests(
         self,
         requests: list[tuple[str, str]],  # List of (question, search_results) tuples
@@ -68,6 +82,7 @@ class QAService:
 
         return await asyncio.gather(*tasks)
 
+    @traceable(name="answer_question_pipeline")
     async def answer_question(
         self,
         question: str,
@@ -78,6 +93,18 @@ class QAService:
         start_time = datetime.now()
         session_id = str(uuid.uuid4())
 
+        # Add metadata for tracing
+        from langsmith import get_current_run_tree
+
+        run = get_current_run_tree()
+        if run:
+            run.inputs = {
+                "question": question,
+                "document_ids": document_ids,
+                "context_length": context_length,
+                "session_id": session_id,
+            }
+
         qdrant_client = Qdrant()
         sources = qdrant_client.search(
             question=question,
@@ -85,6 +112,8 @@ class QAService:
         )
 
         if not sources:
+            if run:
+                run.outputs = {"error": "No relevant documents found"}
             raise ValueError("No relevant documents found for the question.")
 
         # Prepare the context for the LLM
@@ -143,8 +172,19 @@ class QAService:
         )
         self.qa_history[session_id] = qa_record
 
+        # Add final outputs to trace
+        if run:
+            run.outputs = {
+                "answer": answer,
+                "confidence_score": confidence_score,
+                "processing_time": processing_time,
+                "sources_count": len(formatted_sources),
+                "session_id": session_id,
+            }
+
         return response
 
+    @traceable(name="submit_feedback")
     async def submit_feedback(self, feedback: FeedbackRequest):
         """Submit feedback for a question-answer pair"""
         self.feedback_db[feedback.session_id] = feedback
