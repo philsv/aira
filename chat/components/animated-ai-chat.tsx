@@ -482,7 +482,9 @@ function FileUploadModal({
                     </div>
                     <span className="text-sm text-white/80 truncate max-w-[180px]">{file.name}</span>
                   </div>
-                  <span className="text-xs text-white/40">{file.size}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-white/40">{file.size}</span>
+                  </div>
                 </div>
 
                 <Progress
@@ -942,7 +944,35 @@ export function AnimatedAIChat() {
     setAttachments((prev) => [...prev, fileName])
   }
 
-  const handleDeleteAttachment = (index: number, fileName: string) => {
+  const handleDeleteAttachment = async (index: number, fileName: string) => {
+    // Find the file in uploadedFiles to get the documentId
+    const fileToDelete = uploadedFiles.find(file => file.name === fileName)
+    
+    if (fileToDelete && fileToDelete.documentId) {
+      // If it has a documentId, delete from backend first
+      try {
+        const response = await fetch(`/api/documents/${fileToDelete.documentId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+          throw new Error(errorData.error || 'Failed to delete document')
+        }
+
+        // Remove from uploadedFiles
+        setUploadedFiles(prev => prev.filter(file => file.documentId !== fileToDelete.documentId))
+      } catch (error) {
+        console.error('Error deleting document:', error)
+        setUploadError(`Failed to delete ${fileName}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        return // Don't proceed with UI deletion if backend deletion failed
+      }
+    }
+
+    // Remove from attachments
     setDeleteConfirmation({
       isOpen: true,
       fileName,
