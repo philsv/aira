@@ -1,0 +1,37 @@
+# Core FastAPI dependencies
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Async file operations
+aiofiles>=23.2.1
+
+# Data validation and settings
+pydantic>=2.5.0
+pydantic-settings>=2.0.0
+
+# Configuration
+python-dotenv>=1.0.1
+
+# Package management
+pip>=25.1.1
+
+# Testing
+pytest>=8.4.0
+pytest-asyncio>=0.23.5
+mypy>=1.16.0
+
+# PDF processing
+PyMuPDF>=1.24.9
+pdfplumber>=0.11.6
+tqdm>=4.66.1
+uuid6>=2024.7.10
+
+# Document storage and retrieval
+boto3>=1.38.28
+
+# RAG pipeline components
+qdrant_client>=1.10.1
+openai>=1.82.1
+tiktoken>=0.9.0
+sentence-transformers>=4.1.0

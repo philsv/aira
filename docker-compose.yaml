@@ -1,0 +1,21 @@
+services:
+  api:
+    container_name: api-endpoint
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - qdrant
+  qdrant:
+    container_name: qdrant-service
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    env_file:
+      - .env
