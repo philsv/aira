@@ -1,6 +1,6 @@
 services:
   api:
-    container_name: api-endpoint
+    container_name: api-endpoints
     build:
       context: .
     ports:
@@ -11,6 +11,23 @@ services:
       - ./data:/app/data
     depends_on:
       - qdrant
+    networks:
+      - aira-network
+  frontend:
+    container_name: ai-chat
+    build:
+      context: ./chat
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - BACKEND_URL=http://api:8000
+    depends_on:
+      - api
+    networks:
+      - aira-network
+
   qdrant:
     container_name: qdrant-service
     image: qdrant/qdrant:latest
@@ -19,3 +36,9 @@ services:
       - "6334:6334"
     env_file:
       - .env
+    networks:
+      - aira-network
+
+networks:
+  aira-network:
+    driver: bridge

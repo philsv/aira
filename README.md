@@ -16,7 +16,7 @@ git clone <repository-url>
 cd aira
 ```
 
-2. Install dependencies:
+2. Install dependencies and deploys the application to docker:
 
 ```bash
 make install

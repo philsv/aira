@@ -3,13 +3,13 @@
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  install      Install dependencies"
+	@echo "  install      Install dependencies and build the project"
 	@echo "  server       Run the FastAPI server with uvicorn"
 	@echo "  requirements Compile requirements.in to requirements.txt"
 	@echo "  clean        Clean cache files"
 	@echo "  test         Run tests"
 
-# Install dependencies
+# Install dependencies and builds the project
 install:
 	uv pip install -r requirements.txt
 	docker-compose up -d --build
