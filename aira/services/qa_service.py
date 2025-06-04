@@ -1,6 +1,7 @@
 import asyncio
 import os
 import uuid
+import aiosqlite
 from asyncio import Semaphore
 from datetime import datetime
 from typing import Optional
@@ -30,9 +31,96 @@ client = wrap_openai(
 
 
 class QAService:
-    def __init__(self):
-        self.qa_history = {}  # In-memory storage for now
-        self.feedback_db = {}  # Store feedback
+    def __init__(self, db_path: str = "data/qa.db"):
+        self.db_path = db_path
+        # Initialize database on startup
+        asyncio.create_task(self._init_database())
+
+    async def _init_database(self):
+        """Initialize SQLite database with QA history and feedback tables."""
+        async with aiosqlite.connect(self.db_path) as conn:
+            # Create QA history table
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS qa_history (
+                    id TEXT PRIMARY KEY,
+                    question TEXT NOT NULL,
+                    answer TEXT NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    document_ids TEXT NOT NULL,
+                    confidence_score REAL,
+                    feedback_rating INTEGER,
+                    processing_time REAL
+                )
+            """
+            )
+
+            # Create feedback table
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    rating INTEGER NOT NULL,
+                    comment TEXT,
+                    timestamp TEXT NOT NULL,
+                    FOREIGN KEY (session_id) REFERENCES qa_history (id)
+                )
+            """
+            )
+            await conn.commit()
+
+    async def _save_qa_record(self, qa_record: QAHistory):
+        """Save QA record to SQLite database."""
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
+                """
+                INSERT OR REPLACE INTO qa_history 
+                (id, question, answer, timestamp, document_ids, confidence_score, feedback_rating, processing_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+                (
+                    qa_record.id,
+                    qa_record.question,
+                    qa_record.answer,
+                    qa_record.timestamp.isoformat(),
+                    ",".join(qa_record.document_ids),  # Store as comma-separated string
+                    qa_record.confidence_score,
+                    qa_record.feedback_rating,
+                    None,  # processing_time will be added separately if needed
+                ),
+            )
+            await conn.commit()
+
+    async def _save_feedback(self, feedback: FeedbackRequest):
+        """Save feedback to SQLite database."""
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
+                """
+                INSERT INTO feedback 
+                (session_id, rating, comment, timestamp)
+                VALUES (?, ?, ?, ?)
+            """,
+                (
+                    feedback.session_id,
+                    feedback.rating,
+                    feedback.comment,
+                    datetime.now().isoformat(),
+                ),
+            )
+            await conn.commit()
+
+    def _qa_history_from_row(self, row: tuple) -> QAHistory:
+        """Convert database row to QAHistory object."""
+        return QAHistory(
+            id=row[0],
+            question=row[1],
+            answer=row[2],
+            timestamp=datetime.fromisoformat(row[3]),
+            document_ids=row[4].split(",") if row[4] else [],
+            confidence_score=row[5],
+            feedback_rating=row[6],
+        )
 
     @staticmethod
     @traceable(name="send_request_to_xai")
@@ -124,7 +212,6 @@ class QAService:
             ]
         )
 
-        # Use the xAI client to generate an answer
         answer_response = await self.send_request(
             Semaphore(2),  # Limit to 2 concurrent requests
             question=question,
@@ -161,7 +248,6 @@ class QAService:
         # Gather all unique document IDs
         document_ids = list(set(point.payload["document_id"] for point in sources))
 
-        # Store in history
         qa_record = QAHistory(
             id=session_id,
             question=question,
@@ -170,7 +256,7 @@ class QAService:
             document_ids=document_ids or [],
             confidence_score=confidence_score,
         )
-        self.qa_history[session_id] = qa_record
+        await self._save_qa_record(qa_record)
 
         # Add final outputs to trace
         if run:
@@ -187,14 +273,31 @@ class QAService:
     @traceable(name="submit_feedback")
     async def submit_feedback(self, feedback: FeedbackRequest):
         """Submit feedback for a question-answer pair"""
-        self.feedback_db[feedback.session_id] = feedback
+        await self._save_feedback(feedback)
 
-        # Update QA history with feedback
-        if feedback.session_id in self.qa_history:
-            self.qa_history[feedback.session_id].feedback_rating = feedback.rating
+        # Update QA history with feedback rating
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
+                """
+                UPDATE qa_history 
+                SET feedback_rating = ? 
+                WHERE id = ?
+            """,
+                (feedback.rating, feedback.session_id),
+            )
+            await conn.commit()
 
     async def get_qa_history(self, limit: int = 10, offset: int = 0) -> list[QAHistory]:
-        """Get question-answer history"""
-        history_list = list(self.qa_history.values())
-        history_list.sort(key=lambda x: x.timestamp, reverse=True)
-        return history_list[offset : offset + limit]
+        """Get question-answer history from database"""
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                SELECT id, question, answer, timestamp, document_ids, confidence_score, feedback_rating
+                FROM qa_history 
+                ORDER BY timestamp DESC 
+                LIMIT ? OFFSET ?
+            """,
+                (limit, offset),
+            )
+            rows = await cursor.fetchall()
+            return [self._qa_history_from_row(tuple(row)) for row in rows]
