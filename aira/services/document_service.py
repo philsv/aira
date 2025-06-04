@@ -3,7 +3,7 @@ import io
 import logging
 import os
 import re
-import sqlite3
+import aiosqlite
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -12,9 +12,10 @@ import openai
 import pdfplumber  # type: ignore[import]
 import tiktoken  # type: ignore[import]
 from fastapi import UploadFile
+from qdrant_client.http.models import PointStruct  # Type hint
 
 from ..models.documents import Document, DocumentStatus
-from ..services.qdrant_upload import Qdrant
+from .qdrant_service import Qdrant
 from ..services.s3_upload import S3
 
 logging.basicConfig(
@@ -36,13 +37,12 @@ MAX_TOKENS_PER_CHUNK = 1500
 class DocumentService:
     def __init__(self, db_path: str = "data/documents.db"):
         self.db_path = db_path
-        self._init_database()
-        self.documents_db: dict[str, Document] = self.get_documents_db()
+        self.documents_db: dict[str, Document] = {}
 
-    def _init_database(self):
+    async def _init_database(self):
         """Initialize SQLite database with documents table."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS documents (
                     id TEXT PRIMARY KEY,
@@ -56,7 +56,7 @@ class DocumentService:
                 )
             """
             )
-            conn.commit()
+            await conn.commit()
 
     def _document_from_row(self, row: tuple) -> Document:
         """Convert database row to Document object."""
@@ -71,10 +71,10 @@ class DocumentService:
             content_preview=row[7],
         )
 
-    def _save_document(self, document: Document):
+    async def _save_document(self, document: Document):
         """Save document to SQLite database."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute(
                 """
                 INSERT OR REPLACE INTO documents 
                 (id, filename, file_path, status, upload_time, processed_time, file_size, content_preview)
@@ -95,18 +95,56 @@ class DocumentService:
                     document.content_preview,
                 ),
             )
-            conn.commit()
+            await conn.commit()
 
-    def get_documents_db(self) -> dict[str, Document]:
-        """Retrieve all documents from the SQLite database."""
-        documents = {}
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute("SELECT * FROM documents ORDER BY upload_time DESC")
-            rows = cursor.fetchall()
-            for row in rows:
-                document = self._document_from_row(row)
-                documents[document.id] = document
-        return documents
+    async def get_all_documents(self) -> list[Document]:
+        """Get all documents"""
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                "SELECT * FROM documents ORDER BY upload_time DESC"
+            )
+            rows = await cursor.fetchall()
+            return [self._document_from_row(tuple(row)) for row in rows]
+
+    async def get_document(self, document_id: str) -> Optional[Document]:
+        """Get a specific document"""
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                "SELECT * FROM documents WHERE id = ?", (document_id,)
+            )
+            row = await cursor.fetchone()
+            return self._document_from_row(tuple(row)) if row else None
+
+    async def delete_document(self, document_id: str) -> bool:
+        """Delete a document"""
+        document = await self.get_document(document_id)
+        if not document:
+            return False
+
+        s3_key = document.filename
+
+        try:
+            # Delete from S3
+            logging.info(f"Deleting file {s3_key} from S3")
+            s3_client = S3()
+            s3_client.delete_file(s3_key)
+        except Exception as e:
+            logging.error(f"Error deleting file: {e}")
+
+        # Delete from Qdrant
+        try:
+            logging.info(f"Deleting document {document_id} from Qdrant")
+            qdrant_client = Qdrant()
+            qdrant_client.delete_points(document_id)
+        except Exception as e:
+            logging.error(f"Error deleting from Qdrant: {e}")
+
+        # Remove from SQLite database
+        async with aiosqlite.connect(self.db_path) as conn:
+            await conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+            await conn.commit()
+
+        return True
 
     def extract_full_text(self, pdf_source: str | io.BytesIO) -> str:
         """Extract full text from a PDF file or stream using pdfplumber."""
@@ -208,7 +246,7 @@ class DocumentService:
             file_size=len(content),
         )
 
-        self._save_document(document)
+        await self._save_document(document)
         return document
 
     async def process_document(self, document_id: str) -> None:
@@ -219,7 +257,7 @@ class DocumentService:
             return
 
         document.status = DocumentStatus.PROCESSING
-        self._save_document(document)
+        await self._save_document(document)
 
         loop = asyncio.get_event_loop()
 
@@ -272,14 +310,20 @@ class DocumentService:
             logging.info(
                 f"Document {document_id} processed successfully. Preview: {document.content_preview}"
             )
-            self._save_document(document)
+            await self._save_document(document)
 
         except Exception as e:
             document.status = DocumentStatus.ERROR
-            self._save_document(document)
+            await self._save_document(document)
             logging.error(f"Error processing document {document_id}: {e}")
 
-    def _process_qdrant_operations(self, qdrant_client, document, chunks, embeddings):
+    def _process_qdrant_operations(
+        self,
+        qdrant_client: Qdrant,
+        document: Document,
+        chunks: list[str],
+        embeddings: list[list[float]],
+    ) -> list[PointStruct]:
         """Helper method to run Qdrant operations synchronously"""
         if not qdrant_client.collection_exists():
             qdrant_client.create_collection()
@@ -287,54 +331,6 @@ class DocumentService:
         return qdrant_client.upsert_points(
             document.id, document.filename, chunks, embeddings
         )
-
-    async def get_all_documents(self) -> list[Document]:
-        """Get all documents"""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute("SELECT * FROM documents ORDER BY upload_time DESC")
-            rows = cursor.fetchall()
-            return [self._document_from_row(row) for row in rows]
-
-    async def get_document(self, document_id: str) -> Optional[Document]:
-        """Get a specific document"""
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute(
-                "SELECT * FROM documents WHERE id = ?", (document_id,)
-            )
-            row = cursor.fetchone()
-            return self._document_from_row(row) if row else None
-
-    async def delete_document(self, document_id: str) -> bool:
-        """Delete a document"""
-        document = await self.get_document(document_id)
-        if not document:
-            return False
-
-        s3_key = document.filename
-
-        # Delete file
-        try:
-            # Delete from S3
-            logging.info(f"Deleting file {s3_key} from S3")
-            s3_client = S3()
-            s3_client.delete_file(s3_key)
-        except Exception as e:
-            logging.error(f"Error deleting file: {e}")
-
-        # Delete from Qdrant
-        try:
-            logging.info(f"Deleting document {document_id} from Qdrant")
-            qdrant_client = Qdrant()
-            qdrant_client.delete_points(document_id)
-        except Exception as e:
-            logging.error(f"Error deleting from Qdrant: {e}")
-
-        # Remove from SQLite database
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("DELETE FROM documents WHERE id = ?", (document_id,))
-            conn.commit()
-
-        return True
 
     async def check_duplicate_filename(self, filename: str) -> bool:
         """Check if a document with the given filename already exists"""

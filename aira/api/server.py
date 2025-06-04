@@ -1,5 +1,6 @@
 import os
 import logging
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
@@ -9,7 +10,6 @@ from ..models.documents import (
     DocumentResponse,
     DocumentStatus,
     FeedbackRequest,
-    QuestionRequest,
     QuestionResponse,
 )
 from ..services import DocumentService, QAService
@@ -18,11 +18,25 @@ from ..services import DocumentService, QAService
 UVICORN_HOST = os.getenv("UVICORN_HOST", "0.0.0.0")
 UVICORN_PORT = int(os.getenv("UVICORN_PORT", "8000"))
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await document_service._init_database()
+    # Load existing documents into memory
+    document_service.documents_db = {
+        doc.id: doc for doc in await document_service.get_all_documents()
+    }
+    yield
+    # Shutdown (if needed)
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title="AIRA - Agentic Information Retrieval API",
     description="API for document upload, question answering, and feedback collection",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
@@ -101,7 +115,7 @@ async def upload_document(
             filename=file.filename,
             status=DocumentStatus.UPLOADED,
             message="Document uploaded successfully and is being processed",
-            upload_time=document_service.documents_db[document.id].upload_time,
+            upload_time=document.upload_time,
         )
     except Exception as e:
         logger.error(f"Error uploading document: {str(e)}")
@@ -180,18 +194,10 @@ async def delete_document(document_id: str):
 
 
 @app.post("/qa/ask", response_model=QuestionResponse)
-async def ask_question(request: QuestionRequest):
+async def ask_question(question: str):
     """Ask a question and get an answer based on uploaded documents"""
     try:
-        # Provide a default value of 5 if context_length is None
-        context_length = (
-            request.context_length if request.context_length is not None else 5
-        )
-        response = await qa_service.answer_question(
-            question=request.question,
-            document_ids=request.document_ids,
-            context_length=context_length,
-        )
+        response = await qa_service.answer_question(question=question)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

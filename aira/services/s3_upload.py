@@ -56,7 +56,7 @@ class S3:
         presigned_url = self.client.generate_presigned_url(
             "get_object",
             Params={"Bucket": self.bucket_name, "Key": object_name},
-            ExpiresIn=86400,
+            ExpiresIn=604800,  # 7 days in seconds
         )
 
         return presigned_url

@@ -1,6 +1,8 @@
 import logging
 import os
 
+import openai  # Typ hint
+
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient, models
 from qdrant_client.models import Distance, PointStruct, VectorParams
@@ -18,6 +20,12 @@ QDRANT_HOST = os.getenv("QDRANT_HOST", "host.docker.internal")
 QDRANT_PORT = os.getenv("QDRANT_PORT", "6333")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-ada-002")
 MODEL_DIMENSIONS = os.getenv("MODEL_DIMENSIONS", "1536")
+
+# OpenAI client configuration
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+EMBED_MODEL = os.getenv("EMBED_MODEL", "text-embedding-ada-002")
+
+openai.api_key = OPENAI_API_KEY
 
 
 class Qdrant:
@@ -83,6 +91,7 @@ class Qdrant:
                 id=point_id,
                 vector=data,
                 payload={
+                    "point_id": point_id,
                     "document_id": document_id,
                     "document_filename": document_filename,
                     "content": chunks[idx],
@@ -138,3 +147,25 @@ class Qdrant:
                 )
             ),
         )
+
+    def search(
+        self,
+        question: str,
+        context_length: int = 5,
+    ) -> list:
+        """Search in Qdrant collection."""
+        search_result = self.client.search(
+            collection_name=self.collection_name,
+            search_params=models.SearchParams(
+                quantization=models.QuantizationSearchParams(
+                    rescore=True,
+                )
+            ),
+            query_vector=openai.embeddings.create(
+                input=[question], model=self.embedding_model_name
+            )
+            .data[0]
+            .embedding,
+            limit=context_length,
+        )
+        return search_result

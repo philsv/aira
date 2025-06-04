@@ -5,6 +5,7 @@ python-multipart>=0.0.6
 
 # Async file operations
 aiofiles>=23.2.1
+aiosqlite>=0.20.0
 
 # Data validation and settings
 pydantic>=2.5.0
@@ -34,4 +35,3 @@ boto3>=1.38.28
 qdrant_client>=1.10.1
 openai>=1.82.1
 tiktoken>=0.9.0
-sentence-transformers>=4.1.0

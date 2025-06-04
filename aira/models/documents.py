@@ -21,8 +21,6 @@ class DocumentResponse(BaseModel):
 
 class QuestionRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=1000)
-    document_ids: Optional[List[str]] = None
-    context_length: Optional[int] = Field(default=3, ge=1, le=10)
 
 
 class QuestionResponse(BaseModel):
