@@ -1413,7 +1413,7 @@ export function AnimatedAIChat() {
         <MessageSquare className="w-5 h-5 text-white/70" />
       </motion.button>
 
-      <div className="w-full max-w-4xl mx-auto relative flex flex-col h-screen pb-40">
+      <div className="w-full max-w-4xl mx-auto relative flex flex-col h-screen pb-20">
         {/* Welcome Screen */}
         <AnimatePresence>
           {showWelcomeScreen && (
