@@ -27,6 +27,16 @@ services:
       - api
     networks:
       - aira-network
+  docs:
+    container_name: docs
+    build: ./docs
+    ports:
+      - "3005:3005"
+    command: npm start
+    depends_on:
+      - api
+    networks:
+      - aira-network
 
   qdrant:
     container_name: qdrant-service

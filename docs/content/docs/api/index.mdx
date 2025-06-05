@@ -1,0 +1,102 @@
+---
+title: Backend API
+description: Python FastAPI server for document processing and AI-powered Q&A
+---
+
+The AIRA backend is a Python FastAPI server that handles document processing, AI question answering, and feedback management.
+
+## Document Management
+
+Manage PDF documents with the following endpoints:
+
+<Cards>
+  <Card 
+    title="POST /documents/upload"
+    description="Upload and process PDF files asynchronously"
+    href="/docs/api/Upload_Document_documents_upload_post"
+  />
+</Cards>
+
+<br />
+
+<Cards>
+  <Card 
+    title="GET /documents"
+    description="List documents with metadata"
+    href="/docs/api/List_Documents_documents_get"
+  />
+</Cards>
+
+<br />
+
+<Cards>
+  <Card 
+    title="GET /documents/{id}/status"
+    description="Check processing status of a document"
+    href="/docs/api/Get_Document_Status_documents__document_id__status_get"
+  />
+</Cards>
+
+<br />
+
+<Cards>
+  <Card 
+    title="DELETE /documents/{id}"
+    description="Delete a document and its associated data"
+    href="/docs/api/Delete_Document_documents__document_id__delete"
+  />
+</Cards>
+
+## Question & Answer
+
+The Q&A system allows you to ask questions about the uploaded documents:
+
+<Cards>
+  <Card 
+    title="POST /qa/ask"
+    description="Ask questions about uploaded documents"
+    href="/docs/api/Ask_Question_qa_ask_post"
+  />
+</Cards>
+
+<br />
+
+<Cards>
+  <Card 
+    title="GET /qa/history"
+    description="Get conversation history"
+    href="/docs/api/Get_QA_History_qa_history_get"
+  />
+</Cards>
+
+### Feedback System
+
+The feedback system allows users to provide ratings and comments on the Q&A responses:
+
+<Cards>
+  <Card 
+    title="POST /feedback"
+    description="Submit feedback with ratings and optional comments"
+    href="/docs/api/Submit_Feedback_feedback_post"
+  />
+</Cards>
+
+<br />
+
+<Cards>
+  <Card 
+    title="GET /feedback"
+    description="Get feedback history"
+    href="/docs/api/Get_Feedback_History_feedback_get"
+  />
+</Cards>
+
+<br />
+
+<Cards>
+  <Card 
+    title="DELETE /feedback/{session_id}"
+    description="Delete feedback entries"
+    href="/docs/api/Delete_Feedback_feedback__session_id__delete"
+  />
+</Cards>

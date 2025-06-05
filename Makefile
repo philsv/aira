@@ -4,6 +4,7 @@
 help:
 	@echo "Available commands:"
 	@echo "  install      Install dependencies and build the project"
+	@echo "  deploy       Deploy the project using Docker Compose"
 	@echo "  server       Run the FastAPI server with uvicorn"
 	@echo "  requirements Compile requirements.in to requirements.txt"
 	@echo "  clean        Clean cache files"
@@ -12,6 +13,9 @@ help:
 # Install dependencies and builds the project
 install:
 	uv pip install -r requirements.txt
+
+# Deploy the project using Docker Compose
+deploy:
 	docker-compose up -d --build
 
 # Run the FastAPI server

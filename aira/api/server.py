@@ -39,10 +39,16 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="AIRA - Agentic Information Retrieval API",
+    title="AIRA - Agentic Information Retrieval Assistant",
     description="API for document upload, question answering, and feedback collection",
     version="0.1.0",
     lifespan=lifespan,
+    servers=[
+        {
+            "url": f"http://localhost:{UVICORN_PORT}",
+            "description": "Development server",
+        },
+    ],
 )
 
 # Add CORS middleware
@@ -62,13 +68,43 @@ qa_service = QAService()
 logger = logging.getLogger(__name__)
 
 
-@app.get("/")
-async def root():
-    """Health check endpoint"""
-    return {"message": "AIRA - Agentic Information Retrieval API is running"}
+@app.get(
+    "/",
+    response_model=dict,
+    name="Health Check",
+    description="Health check endpoint to verify if the API is running",
+    responses={
+        200: {"description": "API is running successfully"},
+    },
+    tags=["Health"],
+)
+async def health_check():
+    """
+    Health check endpoint that returns the API status and basic information.
+
+    Returns:
+        dict: A dictionary containing status information about the API
+    """
+    return {
+        "status": "healthy",
+        "message": "Aira API is running successfully",
+        "api_name": "Agentic Information Retrieval Assistant",
+        "version": "0.1.0",
+    }
 
 
-@app.post("/documents/upload", response_model=DocumentResponse)
+@app.post(
+    "/documents/upload",
+    response_model=DocumentResponse,
+    name="Upload Document",
+    description="Upload a document for processing",
+    responses={
+        400: {"description": "Invalid file type"},
+        409: {"description": "Document with the same filename already exists"},
+        500: {"description": "Internal server error"},
+    },
+    tags=["Documents"],
+)
 async def upload_document(
     background_tasks: BackgroundTasks, file: UploadFile = File(...)
 ):
@@ -128,7 +164,18 @@ async def upload_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/documents/upload-sync")
+@app.post(
+    "/documents/upload-sync",
+    response_model=DocumentResponse,
+    name="Upload Document Sync",
+    description="Upload and process a document synchronously for debugging",
+    responses={
+        400: {"description": "Invalid file type"},
+        409: {"description": "Document with the same filename already exists"},
+        500: {"description": "Internal server error"},
+    },
+    tags=["Documents"],
+)
 async def upload_document_sync(file: UploadFile = File(...)):
     """Upload and process a document synchronously for debugging"""
     try:
@@ -158,7 +205,16 @@ async def upload_document_sync(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/documents")
+@app.get(
+    "/documents",
+    response_model=dict,
+    name="List Documents",
+    description="List all uploaded documents",
+    responses={
+        500: {"description": "Internal server error"},
+    },
+    tags=["Documents"],
+)
 async def list_documents():
     """List all uploaded documents"""
     try:
@@ -168,7 +224,17 @@ async def list_documents():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/documents/{document_id}/status")
+@app.get(
+    "/documents/{document_id}/status",
+    response_model=dict,
+    name="Get Document Status",
+    description="Get the processing status of a specific document",
+    responses={
+        404: {"description": "Document not found"},
+        500: {"description": "Internal server error"},
+    },
+    tags=["Documents"],
+)
 async def get_document_status(document_id: str):
     """Get the processing status of a document"""
     try:
@@ -187,7 +253,17 @@ async def get_document_status(document_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/documents/{document_id}")
+@app.delete(
+    "/documents/{document_id}",
+    response_model=dict,
+    name="Delete Document",
+    description="Delete a specific document",
+    responses={
+        404: {"description": "Document not found"},
+        500: {"description": "Internal server error"},
+    },
+    tags=["Documents"],
+)
 async def delete_document(document_id: str):
     """Delete a document"""
     try:
@@ -199,7 +275,17 @@ async def delete_document(document_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/qa/ask", response_model=QuestionResponse)
+@app.post(
+    "/qa/ask",
+    response_model=QuestionResponse,
+    name="Ask Question",
+    description="Ask a question to an AI model based on uploaded documents",
+    responses={
+        400: {"description": "Invalid question format"},
+        500: {"description": "Internal server error"},
+    },
+    tags=["Question Answering"],
+)
 async def ask_question(request: QuestionRequest):
     """Ask a question and get an answer based on uploaded documents"""
     try:
@@ -209,7 +295,16 @@ async def ask_question(request: QuestionRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/qa/history")
+@app.get(
+    "/qa/history",
+    response_model=dict,
+    name="Get QA History",
+    description="Get the history of question-answer pairs",
+    responses={
+        500: {"description": "Internal server error"},
+    },
+    tags=["Question Answering"],
+)
 async def get_qa_history(limit: int = 10, offset: int = 0):
     """Get question-answer history"""
     try:
@@ -219,7 +314,17 @@ async def get_qa_history(limit: int = 10, offset: int = 0):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/feedback")
+@app.post(
+    "/feedback",
+    response_model=dict,
+    name="Submit Feedback",
+    description="Submit feedback for a question-answer pair",
+    responses={
+        400: {"description": "Invalid feedback format"},
+        500: {"description": "Internal server error"},
+    },
+    tags=["Feedback"],
+)
 async def submit_feedback(feedback: FeedbackRequest):
     """Submit feedback for a question-answer pair"""
     try:
@@ -229,7 +334,16 @@ async def submit_feedback(feedback: FeedbackRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/feedback")
+@app.get(
+    "/feedback",
+    response_model=dict,
+    name="Get Feedback History",
+    description="Get the history of feedback submissions",
+    responses={
+        500: {"description": "Internal server error"},
+    },
+    tags=["Feedback"],
+)
 async def get_feedback(limit: int = 10, offset: int = 0):
     """Get feedback history"""
     try:
@@ -241,7 +355,17 @@ async def get_feedback(limit: int = 10, offset: int = 0):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/feedback/{session_id}")
+@app.delete(
+    "/feedback/{session_id}",
+    response_model=dict,
+    name="Delete Feedback",
+    description="Delete feedback for a specific session",
+    responses={
+        404: {"description": "Feedback not found"},
+        500: {"description": "Internal server error"},
+    },
+    tags=["Feedback"],
+)
 async def delete_feedback(session_id: str):
     """Delete feedback for a specific session"""
     try:

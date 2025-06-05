@@ -1,4 +1,6 @@
-# aira - Agentic Information Retrieval API
+# aira - Agentic Information Retrieval Assistant
+
+Aira is a demo AI-powered document chat application that allows users to interact with documents using natural language.
 
 ## 🚀 Quick Start
 
@@ -18,10 +20,16 @@ git clone https://github.com/philsv/aira.git
 cd aira
 ```
 
-2. Install dependencies and deploys the application to docker:
+2. Install dependencies:
 
 ```bash
 make install
+```
+
+3. Deploy the application with a single command:
+
+```bash
+make deploy
 ```
 
 ## 🛠️ Development
@@ -55,7 +63,3 @@ To update dependencies:
 ```bash
 make requirements
 ```
-
-## 🐳 Docker Support
-
-The project includes Docker support via [docker-compose.yaml](docker-compose.yaml).
