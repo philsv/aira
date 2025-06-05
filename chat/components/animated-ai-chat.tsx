@@ -543,7 +543,7 @@ interface FeedbackModalProps {
   question: string
   answer: string
   comment: string
-  onSubmit: (rating: number, helpful: boolean) => void
+  onSubmit: (rating: number, is_helpful: boolean) => void
   isSubmitting: boolean
 }
 
@@ -558,12 +558,12 @@ function FeedbackModal({
 }: FeedbackModalProps) {
   const { t } = useTranslation()
   const [rating, setRating] = useState(0)
-  const [helpful, setHelpful] = useState<boolean | null>(null)
+  const [is_helpful, setHelpful] = useState<boolean | null>(null)
   const [hoveredStar, setHoveredStar] = useState(0)
 
   const handleSubmit = () => {
-    if (rating > 0 && helpful !== null) {
-      onSubmit(rating, helpful)
+    if (rating > 0 && is_helpful !== null) {
+      onSubmit(rating, is_helpful)
     }
   }
 
@@ -647,7 +647,7 @@ function FeedbackModal({
                 onClick={() => setHelpful(true)}
                 className={cn(
                   "px-4 py-2 rounded-xl text-sm font-medium transition-all",
-                  helpful === true
+                  is_helpful === true
                     ? "bg-green-600 text-white"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
                 )}
@@ -658,7 +658,7 @@ function FeedbackModal({
                 onClick={() => setHelpful(false)}
                 className={cn(
                   "px-4 py-2 rounded-xl text-sm font-medium transition-all",
-                  helpful === false
+                  is_helpful === false
                     ? "bg-red-600 text-white"
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
                 )}
@@ -680,10 +680,10 @@ function FeedbackModal({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={rating === 0 || helpful === null || isSubmitting}
+            disabled={rating === 0 || is_helpful === null || isSubmitting}
             className={cn(
               "transition-all rounded-xl",
-              rating > 0 && helpful !== null
+              rating > 0 && is_helpful !== null
                 ? "bg-violet-600 hover:bg-violet-700 text-white"
                 : "bg-white/5 text-white/40 cursor-not-allowed",
             )}
@@ -824,8 +824,8 @@ function ChatHistoryModal({ isOpen, onOpenChange, history, loading, error }: Cha
           ) : history.length === 0 ? (
             <div className="text-center py-8">
               <MessageSquare className="w-12 h-12 text-white/20 mx-auto mb-3" />
-              <p className="text-white/40">No chat history yet</p>
-              <p className="text-white/30 text-sm">Start a conversation to see your history here</p>
+              <p className="text-white/40">{t('chat.noChatHistory')}</p>
+              <p className="text-white/30 text-sm">{t('chat.noChatHistoryDescription')}</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -1290,34 +1290,7 @@ export function AnimatedAIChat() {
   }
 
   const handleDeleteAttachment = async (index: number, fileName: string) => {
-    // Find the file in uploadedFiles to get the documentId
-    const fileToDelete = uploadedFiles.find(file => file.name === fileName)
-    
-    if (fileToDelete && fileToDelete.documentId) {
-      // If it has a documentId, delete from backend first
-      try {
-        const response = await fetch(`/api/documents/${fileToDelete.documentId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-          throw new Error(errorData.error || 'Failed to delete document')
-        }
-
-        // Remove from uploadedFiles
-        setUploadedFiles(prev => prev.filter(file => file.documentId !== fileToDelete.documentId))
-      } catch (error) {
-        console.error('Error deleting document:', error)
-        setUploadError(`Failed to delete ${fileName}: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        return // Don't proceed with UI deletion if backend deletion failed
-      }
-    }
-
-    // Remove from attachments
+    // Show confirmation modal first
     setDeleteConfirmation({
       isOpen: true,
       fileName,
@@ -1325,14 +1298,43 @@ export function AnimatedAIChat() {
     })
   }
 
-  const confirmDeleteAttachment = () => {
+  const confirmDeleteAttachment = async () => {
     if (deleteConfirmation.index >= 0) {
       const fileToDelete = attachments[deleteConfirmation.index]
+      
+      // Find the file in uploadedFiles to get the documentId
+      const uploadedFileToDelete = uploadedFiles.find(file => file.name === fileToDelete)
+      
+      if (uploadedFileToDelete && uploadedFileToDelete.documentId) {
+        // If it has a documentId, delete from backend first
+        try {
+          const response = await fetch(`/api/documents/${uploadedFileToDelete.documentId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+            throw new Error(errorData.error || 'Failed to delete document')
+          }
+
+          // Remove from uploadedFiles
+          setUploadedFiles(prev => prev.filter(file => file.documentId !== uploadedFileToDelete.documentId))
+        } catch (error) {
+          console.error('Error deleting document:', error)
+          setUploadError(`Failed to delete ${fileToDelete}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          // Close the modal even if deletion failed
+          setDeleteConfirmation({ isOpen: false, fileName: "", index: -1 })
+          return // Don't proceed with UI deletion if backend deletion failed
+        }
+      }
 
       // Remove from attachments
       removeAttachment(deleteConfirmation.index)
 
-      // Also remove from uploaded files list
+      // Also remove from uploaded files list (for files without documentId)
       setUploadedFiles((prev) => prev.filter((file) => file.name !== fileToDelete))
     }
     setDeleteConfirmation({ isOpen: false, fileName: "", index: -1 })
@@ -1342,7 +1344,7 @@ export function AnimatedAIChat() {
     setDeleteConfirmation({ isOpen: false, fileName: "", index: -1 })
   }
 
-  const handleFeedbackSubmit = async (rating: number, helpful: boolean) => {
+  const handleFeedbackSubmit = async (rating: number, is_helpful: boolean) => {
     setIsSubmittingFeedback(true)
 
     try {
@@ -1351,7 +1353,7 @@ export function AnimatedAIChat() {
                        history.find(h => h.answer === feedbackData.answer)?.id
 
       // Validate required fields
-      if (!feedbackData.question || !feedbackData.answer || rating === undefined || helpful === undefined) {
+      if (!feedbackData.question || !feedbackData.answer || rating === undefined || is_helpful === undefined) {
         throw new Error("Missing required fields")
       }
 
@@ -1365,7 +1367,7 @@ export function AnimatedAIChat() {
           answer: feedbackData.answer,
           comment: feedbackData.comment,
           rating,
-          helpful,
+          is_helpful,
           session_id: sessionId, // Include session_id for backend tracking
         }),
       })

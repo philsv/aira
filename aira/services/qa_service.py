@@ -12,6 +12,7 @@ from langsmith import traceable
 
 from ..models.documents import (
     FeedbackRequest,
+    FeedbackHistory,
     QAHistory,
     QuestionResponse,
 )
@@ -61,9 +62,12 @@ class QAService:
                 CREATE TABLE IF NOT EXISTS feedback (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     session_id TEXT NOT NULL,
+                    question TEXT NOT NULL,
+                    answer TEXT NOT NULL,
                     rating INTEGER NOT NULL,
                     comment TEXT,
                     timestamp TEXT NOT NULL,
+                    is_helpful BOOLEAN NOT NULL,
                     FOREIGN KEY (session_id) REFERENCES qa_history (id)
                 )
             """
@@ -98,13 +102,16 @@ class QAService:
             await conn.execute(
                 """
                 INSERT INTO feedback 
-                (session_id, rating, comment, timestamp)
-                VALUES (?, ?, ?, ?)
+                (session_id, question, answer, rating, comment, is_helpful, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     feedback.session_id,
+                    feedback.question,
+                    feedback.answer,
                     feedback.rating,
                     feedback.comment,
+                    feedback.is_helpful,
                     datetime.now().isoformat(),
                 ),
             )
@@ -270,6 +277,21 @@ class QAService:
 
         return response
 
+    async def get_qa_history(self, limit: int = 10, offset: int = 0) -> list[QAHistory]:
+        """Get question-answer history from database"""
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                SELECT id, question, answer, timestamp, document_ids, confidence_score, feedback_rating
+                FROM qa_history 
+                ORDER BY timestamp DESC 
+                LIMIT ? OFFSET ?
+            """,
+                (limit, offset),
+            )
+            rows = await cursor.fetchall()
+            return [self._qa_history_from_row(tuple(row)) for row in rows]
+
     @traceable(name="submit_feedback")
     async def submit_feedback(self, feedback: FeedbackRequest):
         """Submit feedback for a question-answer pair"""
@@ -289,12 +311,12 @@ class QAService:
 
     async def get_feedback_history(
         self, limit: int = 10, offset: int = 0
-    ) -> list[FeedbackRequest]:
+    ) -> list[FeedbackHistory]:
         """Get feedback history from database"""
         async with aiosqlite.connect(self.db_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT session_id, question, answer, rating, comment, is_helpful 
+                SELECT session_id, question, answer, rating, comment, is_helpful, timestamp
                 FROM feedback 
                 ORDER BY timestamp DESC 
                 LIMIT ? OFFSET ?
@@ -303,28 +325,27 @@ class QAService:
             )
             rows = await cursor.fetchall()
             return [
-                FeedbackRequest(
+                FeedbackHistory(
                     session_id=row[0],
                     question=row[1],
                     answer=row[2],
                     rating=row[3],
                     comment=row[4],
                     is_helpful=row[5],
+                    timestamp=datetime.fromisoformat(row[6]),
                 )
                 for row in rows
             ]
 
-    async def get_qa_history(self, limit: int = 10, offset: int = 0) -> list[QAHistory]:
-        """Get question-answer history from database"""
+    async def delete_feedback(self, session_id: str):
+        """Delete feedback for a specific session ID"""
         async with aiosqlite.connect(self.db_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT id, question, answer, timestamp, document_ids, confidence_score, feedback_rating
-                FROM qa_history 
-                ORDER BY timestamp DESC 
-                LIMIT ? OFFSET ?
+                DELETE FROM feedback 
+                WHERE session_id = ?
             """,
-                (limit, offset),
+                (session_id,),
             )
-            rows = await cursor.fetchall()
-            return [self._qa_history_from_row(tuple(row)) for row in rows]
+            await conn.commit()
+            return cursor.rowcount > 0

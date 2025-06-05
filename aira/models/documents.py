@@ -41,6 +41,16 @@ class FeedbackRequest(BaseModel):
     is_helpful: bool
 
 
+class FeedbackHistory(BaseModel):
+    session_id: str
+    question: str
+    answer: str
+    rating: int = Field(..., ge=1, le=5)
+    comment: Optional[str] = None
+    is_helpful: bool
+    timestamp: datetime
+
+
 class Document(BaseModel):
     id: str
     filename: str

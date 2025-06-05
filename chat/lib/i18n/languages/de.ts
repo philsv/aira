@@ -26,6 +26,8 @@ export const de: TranslationKeys = {
     thinking: "Hmm mal sehen...",
     historyTitle: "Chatverlauf",
     historyDescription: "Sehen Sie sich Ihre vorherigen Gespräche und KI-Antworten an",
+    noChatHistory: "Noch kein Chatverlauf",
+    noChatHistoryDescription: "Starten Sie ein Gespräch, um Ihren Chatverlauf hier zu sehen",
   },
   
   // File upload

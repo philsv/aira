@@ -241,5 +241,17 @@ async def get_feedback(limit: int = 10, offset: int = 0):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/feedback/{session_id}")
+async def delete_feedback(session_id: str):
+    """Delete feedback for a specific session"""
+    try:
+        success = await qa_service.delete_feedback(session_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Feedback not found")
+        return {"message": "Feedback deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host=UVICORN_HOST, port=int(UVICORN_PORT))
