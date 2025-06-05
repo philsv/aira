@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "generate": "node ./scripts/generate-docs.mjs",
-    "build": "next build",
-    "dev": "npm run generate-docs && next dev --port 3005",
+    "build": "npm run generate && next build",
+    "dev": "npm run generate && next dev --port 3005",
     "start": "next start",
     "postinstall": "fumadocs-mdx"
   },
