@@ -38,5 +38,6 @@ EXPOSE 3000
 ENV PORT=3000
 ENV NODE_ENV=production
 ENV BACKEND_URL=http://localhost:8000
+ENV NEXT_PUBLIC_UI_LANGUAGE=de
 
 CMD ["npm", "start"]

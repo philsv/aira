@@ -7,6 +7,7 @@ interface FeedbackData {
   rating: number
   helpful: boolean
   timestamp: string
+  session_id?: string
 }
 
 export async function POST(request: NextRequest) {

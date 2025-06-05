@@ -1,6 +1,7 @@
 import './globals.css'
 
 import type { Metadata } from 'next'
+import { getDefaultLanguage } from '@/lib/i18n'
 
 export const metadata: Metadata = {
   title: 'Aira Chat',
@@ -13,8 +14,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const language = getDefaultLanguage()
+  
   return (
-    <html lang="en">
+    <html lang={language}>
       <body>{children}</body>
     </html>
   )

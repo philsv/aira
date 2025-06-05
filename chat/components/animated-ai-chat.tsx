@@ -3,14 +3,15 @@
 import * as React from "react"
 
 import { AnimatePresence, motion } from "framer-motion"
+import { Bot, Clock, LoaderIcon, MessageSquare, Paperclip, SendIcon, Sparkles, Star, User, XIcon } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { LoaderIcon, Paperclip, SendIcon, Sparkles, Star, XIcon } from "lucide-react"
 import { useCallback, useEffect, useRef, useTransition } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 interface UseAutoResizeTextareaProps {
   minHeight: number
@@ -143,6 +144,7 @@ function FileUploadModal({
   setUploadError,
   onFileUploaded,
 }: FileUploadModalProps) {
+  const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isLoadingExisting, setIsLoadingExisting] = useState(false)
 
@@ -403,8 +405,10 @@ function FileUploadModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="bg-black/95 border border-white/10 text-white max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-white/90">Upload Files</DialogTitle>
-          <DialogDescription className="text-white/60">Upload PDF files to attach to your message</DialogDescription>
+          <DialogTitle className="text-white/90">{t('fileUpload.title')}</DialogTitle>
+          <DialogDescription className="text-white/60">
+            {t('fileUpload.description')}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="mt-4 border-2 border-dashed border-white/10 hover:border-white/20 rounded-xl p-8 text-center transition-colors">
@@ -426,11 +430,11 @@ function FileUploadModal({
                 className="text-violet-400 hover:text-violet-300 transition-colors underline"
                 onClick={() => fileInputRef.current?.click()}
               >
-                Click to browse
+                {t('fileUpload.clickToBrowse')}
               </button>{" "}
-              or drag and drop files here
+              {t('fileUpload.dragAndDrop')}
             </p>
-            <p className="text-xs text-white/40 mt-1">Only PDF files are supported</p>
+            <p className="text-xs text-white/40 mt-1">{t('fileUpload.pdfOnly')}</p>
           </div>
         </div>
 
@@ -452,7 +456,7 @@ function FileUploadModal({
             animate={{ opacity: 1 }}
           >
             <LoaderIcon className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Loading existing files...</span>
+            <span className="text-sm">{t('fileUpload.loadingExisting')}</span>
           </motion.div>
         )}
 
@@ -464,7 +468,7 @@ function FileUploadModal({
             transition={{ duration: 0.3 }}
           >
             <h3 className="text-sm font-medium text-white/70">
-              {uploadedFiles.some(f => f.progress < 100) ? 'Uploading Files' : 'Available Files'}
+              {uploadedFiles.some(f => f.progress < 100) ? t('fileUpload.uploadingFiles') : t('fileUpload.availableFiles')}
             </h3>
 
             {uploadedFiles.map((file, index) => (
@@ -525,7 +529,7 @@ function FileUploadModal({
             }}
             className="bg-transparent border-white/10 text-white/70 hover:bg-white/5 hover:text-white hover:border-white/20 transition-all rounded-xl"
           >
-            Close
+            {t('common.close')}
           </Button>
         </div>
       </DialogContent>
@@ -552,6 +556,7 @@ function FeedbackModal({
   onSubmit,
   isSubmitting,
 }: FeedbackModalProps) {
+  const { t } = useTranslation()
   const [rating, setRating] = useState(0)
   const [helpful, setHelpful] = useState<boolean | null>(null)
   const [hoveredStar, setHoveredStar] = useState(0)
@@ -578,16 +583,16 @@ function FeedbackModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="bg-black/95 border border-white/10 text-white max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-white/90">Submit Feedback</DialogTitle>
+          <DialogTitle className="text-white/90">{t('feedback.title')}</DialogTitle>
           <DialogDescription className="text-white/60">
-            Please rate your experience and let us know if the AI answer was helpful
+            {t('feedback.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="mt-6 space-y-6">
           {/* Previous Question */}
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-white/70">Your Question:</h3>
+            <h3 className="text-sm font-medium text-white/70">{t('feedback.yourQuestion')}</h3>
             <div className="bg-white/5 rounded-xl p-3">
               <p className="text-sm text-white/80">{question}</p>
             </div>
@@ -595,7 +600,7 @@ function FeedbackModal({
 
           {/* AI Answer */}
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-white/70">AI Answer:</h3>
+            <h3 className="text-sm font-medium text-white/70">{t('feedback.aiAnswer')}</h3>
             <div className="bg-white/5 rounded-xl p-3 max-h-32 overflow-y-auto">
               <p className="text-sm text-white/80">{answer}</p>
             </div>
@@ -603,7 +608,7 @@ function FeedbackModal({
 
           {/* User Comment */}
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-white/70">Your Feedback:</h3>
+            <h3 className="text-sm font-medium text-white/70">{t('feedback.yourFeedback')}</h3>
             <div className="bg-white/5 rounded-xl p-3">
               <p className="text-sm text-white/80">{comment}</p>
             </div>
@@ -611,7 +616,7 @@ function FeedbackModal({
 
           {/* Rating */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-white/70">Rate your experience (1-5 stars):</h3>
+            <h3 className="text-sm font-medium text-white/70">{t('feedback.rating')}</h3>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -636,7 +641,7 @@ function FeedbackModal({
 
           {/* Helpful Question */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-white/70">Was the AI answer helpful?</h3>
+            <h3 className="text-sm font-medium text-white/70">{t('feedback.helpful')}</h3>
             <div className="flex gap-3">
               <button
                 onClick={() => setHelpful(true)}
@@ -647,7 +652,7 @@ function FeedbackModal({
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
                 )}
               >
-                Yes, helpful
+                {t('feedback.yesHelpful')}
               </button>
               <button
                 onClick={() => setHelpful(false)}
@@ -658,7 +663,7 @@ function FeedbackModal({
                     : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
                 )}
               >
-                No, not helpful
+                {t('feedback.notHelpful')}
               </button>
             </div>
           </div>
@@ -671,7 +676,7 @@ function FeedbackModal({
             disabled={isSubmitting}
             className="bg-transparent border-white/10 text-white/70 hover:bg-white/5 hover:text-white hover:border-white/20 transition-all rounded-xl"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -686,10 +691,10 @@ function FeedbackModal({
             {isSubmitting ? (
               <>
                 <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
-                Submitting...
+                {t('feedback.submitting')}
               </>
             ) : (
-              "Submit Feedback"
+              t('feedback.submitFeedback')
             )}
           </Button>
         </div>
@@ -698,7 +703,225 @@ function FeedbackModal({
   )
 }
 
+interface QAHistoryItem {
+  id: string;
+  question: string;
+  answer: string;
+  timestamp: string;
+  document_ids: string[];
+  confidence_score: number;
+  feedback_rating?: number;
+}
+
+const useQAHistory = (limit: number = 10, offset: number = 0) => {
+  const [history, setHistory] = useState<QAHistoryItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchHistory = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/qa/history?limit=${limit}&offset=${offset}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch history');
+      }
+      const data = await response.json();
+      setHistory(data.history);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  }, [limit, offset]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  return { history, loading, error, refetch: fetchHistory };
+};
+
+const QAHistoryPanel = ({ onSelectHistory }: { onSelectHistory: (item: QAHistoryItem) => void }) => {
+  const { history, loading, error } = useQAHistory();
+
+  if (loading) return <div className="animate-pulse">Loading history...</div>;
+  if (error) return <div className="text-red-500">Error: {error}</div>;
+
+  return (
+    <div className="space-y-2 max-h-96 overflow-y-auto">
+      <h3 className="font-semibold text-lg mb-4">Chat History</h3>
+      {history.map((item) => (
+        <div
+          key={item.id}
+          className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => onSelectHistory(item)}
+        >
+          <div className="font-medium text-sm truncate">{item.question}</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {new Date(item.timestamp).toLocaleDateString()} - 
+            Confidence: {(item.confidence_score * 100).toFixed(1)}%
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+interface ChatHistoryModalProps {
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  history: QAHistoryItem[]
+  loading: boolean
+  error: string | null
+}
+
+function ChatHistoryModal({ isOpen, onOpenChange, history, loading, error }: ChatHistoryModalProps) {
+  const { t } = useTranslation()
+  
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const getConfidenceColor = (score?: number) => {
+    if (!score) return "text-white/40"
+    if (score >= 0.8) return "text-green-400"
+    if (score >= 0.6) return "text-yellow-400"
+    return "text-red-400"
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-black/95 border border-white/10 text-white max-w-4xl max-h-[80vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="text-white/90 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            {t('chat.historyTitle')}
+          </DialogTitle>
+          <DialogDescription className="text-white/60">
+            {t('chat.historyDescription')}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="mt-6 overflow-y-auto max-h-[60vh] pr-2">
+          {loading ? (
+            <div className="text-center py-8">
+              <LoaderIcon className="w-8 h-8 animate-spin text-white/40 mx-auto mb-3" />
+              <p className="text-white/40">Loading chat history...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <XIcon className="w-8 h-8 text-red-400 mx-auto mb-3" />
+              <p className="text-red-400 mb-2">Error loading history</p>
+              <p className="text-white/40 text-sm">{error}</p>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-8">
+              <MessageSquare className="w-12 h-12 text-white/20 mx-auto mb-3" />
+              <p className="text-white/40">No chat history yet</p>
+              <p className="text-white/30 text-sm">Start a conversation to see your history here</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {history.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  className="bg-white/5 rounded-xl p-4 border border-white/10"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  {/* Header with timestamp and confidence */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 text-xs text-white/50">
+                      <Clock className="w-3 h-3" />
+                      {formatTimestamp(item.timestamp)}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {item.confidence_score && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-white/40">Confidence:</span>
+                          <span className={cn("text-xs font-medium", getConfidenceColor(item.confidence_score))}>
+                            {Math.round(item.confidence_score * 100)}%
+                          </span>
+                        </div>
+                      )}
+                      {item.feedback_rating && (
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          <span className="text-xs text-yellow-400">{item.feedback_rating}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Question */}
+                  <div className="mb-3">
+                    <div className="text-xs font-medium text-white/60 mb-1">{t('common.question')}:</div>
+                    <div className="text-sm text-white/80 bg-white/5 rounded-lg p-2">{item.question}</div>
+                  </div>
+
+                  {/* Answer */}
+                  <div className="mb-3">
+                    <div className="text-xs font-medium text-white/60 mb-1">{t('common.answer')}:</div>
+                    <div className="text-sm text-white/80 bg-white/5 rounded-lg p-2 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                      {item.answer}
+                    </div>
+                  </div>
+
+                  {/* Document IDs if available */}
+                  {item.document_ids && item.document_ids.length > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-white/40">
+                      <span>{t('dialog.sources')}:</span>
+                      <span>{item.document_ids.length} {t('common.documents')}</span>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end mt-6">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="bg-transparent border-white/10 text-white/70 hover:bg-white/5 hover:text-white hover:border-white/20 transition-all rounded-xl"
+          >
+            {t('common.close')}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+interface CurrentChatMessage {
+  id: string
+  type: "user" | "ai"
+  content: string
+  timestamp: string
+  isTyping?: boolean
+  sources?: Array<{ 
+    id: string
+    title: string
+    content: string
+    documentId?: string
+    score?: number
+  }>
+  confidence?: number
+  processingTime?: number
+  error?: boolean
+}
+
 export function AnimatedAIChat() {
+  const { t } = useTranslation()
   const [value, setValue] = useState("")
   const [attachments, setAttachments] = useState<string[]>([])
   const [isTyping, setIsTyping] = useState(false)
@@ -729,6 +952,9 @@ export function AnimatedAIChat() {
     index: -1,
   })
 
+  // Current chat state (resets on refresh) - new UI structure
+  const [currentChat, setCurrentChat] = useState<CurrentChatMessage[]>([])
+
   // Chat history and feedback state
   const [chatHistory, setChatHistory] = useState<Array<{ question: string; answer: string }>>([])
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
@@ -739,30 +965,34 @@ export function AnimatedAIChat() {
   })
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
 
+  // Chat history modal and sources modal state
+  const [isChatHistoryModalOpen, setIsChatHistoryModalOpen] = useState(false)
+  const [selectedSources, setSelectedSources] = useState<Array<{ 
+    id: string
+    title: string
+    content: string
+    documentId?: string
+    score?: number
+  }>>([])
+  const [isSourcesModalOpen, setIsSourcesModalOpen] = useState(false)
+
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
   const commandSuggestions: CommandSuggestion[] = [
     {
       icon: <Sparkles className="w-4 h-4" />,
-      label: "Submit Feedback",
-      description: "Submit feedback or suggestions",
+      label: t('commands.feedback'),
+      description: t('commands.feedbackDescription'),
       prefix: "/feedback",
     },
   ]
 
+  // Auto-scroll to bottom when new messages are added
   useEffect(() => {
-    if (value.startsWith("/") && !value.includes(" ")) {
-      setShowCommandPalette(true)
-
-      const matchingSuggestionIndex = commandSuggestions.findIndex((cmd) => cmd.prefix.startsWith(value))
-
-      if (matchingSuggestionIndex >= 0) {
-        setActiveSuggestion(matchingSuggestionIndex)
-      } else {
-        setActiveSuggestion(-1)
-      }
-    } else {
-      setShowCommandPalette(false)
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
-  }, [value])
+  }, [currentChat])
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -770,9 +1000,7 @@ export function AnimatedAIChat() {
     }
 
     window.addEventListener("mousemove", handleMouseMove)
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove)
-    }
+    return () => window.removeEventListener("mousemove", handleMouseMove)
   }, [])
 
   useEffect(() => {
@@ -840,6 +1068,175 @@ export function AnimatedAIChat() {
     fetchExistingDocumentsOnMount()
   }, [])
 
+  const sendMessage = async (message: string) => {
+    try {
+      const response = await fetch('/api/qa/ask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: message,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to send message')
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error sending message:', error)
+      throw error
+    }
+  }
+
+  const handleSendMessage = async () => {
+    if (value.trim()) {
+      // Check if it's a feedback command
+      if (value.startsWith("/feedback ")) {
+        const feedbackComment = value.replace("/feedback ", "").trim()
+
+        const hasHistory = chatHistory.length > 0 || history.length > 0
+
+        if (feedbackComment && hasHistory) {
+          let lastChat
+          if (chatHistory.length > 0) {
+            lastChat = chatHistory[chatHistory.length - 1]
+          } else if (history.length > 0) {
+            const lastHistoryItem = history[0]
+            lastChat = {
+              question: lastHistoryItem.question,
+              answer: lastHistoryItem.answer
+            }
+          }
+
+          if (lastChat) {
+            setFeedbackData({
+              question: lastChat.question,
+              answer: lastChat.answer,
+              comment: feedbackComment || "",
+            })
+
+            setIsFeedbackModalOpen(true)
+            setValue("")
+            adjustHeight(true)
+            return
+          }
+        } else {
+          setRecentCommand(t('commands.noPreviousMessagesNotification'))
+          setTimeout(() => setRecentCommand(null), 3000)
+          setValue("")
+          adjustHeight(true)
+          return
+        }
+      }
+
+      const currentQuestion = value.trim()
+
+      // Add user message to current chat
+      const userMessage: CurrentChatMessage = {
+        id: `user_${Date.now()}`,
+        type: "user",
+        content: currentQuestion,
+        timestamp: new Date().toISOString(),
+      }
+
+      setCurrentChat((prev) => [...prev, userMessage])
+
+      startTransition(() => {
+        setIsTyping(true)
+
+        // Add typing indicator
+        const typingMessage: CurrentChatMessage = {
+          id: `typing_${Date.now()}`,
+          type: "ai",
+          content: "",
+          timestamp: new Date().toISOString(),
+          isTyping: true,
+        }
+
+        setCurrentChat((prev) => [...prev, typingMessage])
+
+        sendMessage(currentQuestion)
+          .then((response) => {
+            setIsTyping(false)
+
+            // Remove typing indicator and add actual response
+            setCurrentChat((prev) => {
+              const withoutTyping = prev.filter((msg) => !msg.isTyping)
+              const aiMessage: CurrentChatMessage = {
+                id: response.session_id || `ai_${Date.now()}`,
+                type: "ai",
+                content: response.answer,
+                timestamp: new Date().toISOString(),
+                confidence: response.confidence_score,
+                processingTime: response.processing_time,
+                sources: response.sources ? response.sources.map((source: any, index: number) => ({
+                  id: source.point_id || `source_${index}`,
+                  title: source.document_name || `Source ${index + 1}`,
+                  content: source.content,
+                  documentId: source.document_id,
+                  score: source.score
+                })) : undefined,
+              }
+              return [...withoutTyping, aiMessage]
+            })
+
+            // Add to chat history
+            setChatHistory((prev) => [...prev, { question: currentQuestion, answer: response.answer }])
+
+            setValue("")
+            adjustHeight(true)
+          })
+          .catch((error) => {
+            console.error("Error handling message:", error)
+            setIsTyping(false)
+
+            // Remove typing indicator and add error message
+            setCurrentChat((prev) => {
+              const withoutTyping = prev.filter((msg) => !msg.isTyping)
+              const errorMessage: CurrentChatMessage = {
+                id: `error_${Date.now()}`,
+                type: "ai",
+                content: "Sorry, I encountered an error processing your request.",
+                timestamp: new Date().toISOString(),
+                error: true,
+              }
+              return [...withoutTyping, errorMessage]
+            })
+          })
+      })
+    }
+  }
+
+  const formatMessageTime = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const handleViewSources = (sources: Array<{ 
+    id: string
+    title: string
+    content: string
+    documentId?: string
+    score?: number
+  }>) => {
+    setSelectedSources(sources)
+    setIsSourcesModalOpen(true)
+  }
+
+  // Show welcome screen if no current chat
+  const showWelcomeScreen = currentChat.length === 0
+
+  // Use the existing QA history hook
+  const { history, loading: historyLoading, error: historyError, refetch: refetchHistory } = useQAHistory()
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (showCommandPalette) {
       if (e.key === "ArrowDown") {
@@ -867,59 +1264,6 @@ export function AnimatedAIChat() {
       if (value.trim()) {
         handleSendMessage()
       }
-    }
-  }
-
-  const handleSendMessage = () => {
-    if (value.trim()) {
-      // Check if it's a feedback command
-      if (value.startsWith("/feedback ")) {
-        const feedbackComment = value.replace("/feedback ", "").trim()
-
-        if (feedbackComment && chatHistory.length > 0) {
-          // Get the last Q&A from chat history
-          const lastChat = chatHistory[chatHistory.length - 1]
-
-          setFeedbackData({
-            question: lastChat.question,
-            answer: lastChat.answer,
-            comment: feedbackComment || "",  // Allow empty comment
-          })
-
-          setIsFeedbackModalOpen(true)
-          setValue("")
-          adjustHeight(true)
-          return
-        } else {
-          // Show message if no chat history exists
-          setRecentCommand("No previous conversation found for feedback.")
-          setTimeout(() => setRecentCommand(null), 3000)
-          setValue("")
-          adjustHeight(true)
-          return
-        }
-      }
-
-      startTransition(() => {
-        setIsTyping(true)
-
-        // Store the question
-        const currentQuestion = value.trim()
-
-        setTimeout(() => {
-          setIsTyping(false)
-
-          // Simulate AI response
-          const aiResponse =
-            "Thank you for your question! This is a simulated AI response. In a real implementation, this would be generated by an AI model based on your input."
-
-          // Add to chat history
-          setChatHistory((prev) => [...prev, { question: currentQuestion, answer: aiResponse }])
-
-          setValue("")
-          adjustHeight(true)
-        }, 3000)
-      })
     }
   }
 
@@ -1001,6 +1345,10 @@ export function AnimatedAIChat() {
     setIsSubmittingFeedback(true)
 
     try {
+      // Try to find session_id from the current messages or history
+      const sessionId = currentChat.find(m => m.type === 'ai' && m.content === feedbackData.answer)?.id || 
+                       history.find(h => h.answer === feedbackData.answer)?.id
+
       const response = await fetch("/api/feedback", {
         method: "POST",
         headers: {
@@ -1012,6 +1360,7 @@ export function AnimatedAIChat() {
           comment: feedbackData.comment,
           rating,
           helpful,
+          session_id: sessionId, // Include session_id for backend tracking
         }),
       })
 
@@ -1020,16 +1369,18 @@ export function AnimatedAIChat() {
         console.log("Feedback submitted successfully:", result)
         setIsFeedbackModalOpen(false)
 
-        // Show success message (you could add a toast notification here)
-        setRecentCommand("Feedback submitted successfully!")
+        // Refresh history to show updated feedback
+        refetchHistory()
+
+        // Show success message
+        setRecentCommand(t('feedback.submittedSuccessfully'))
         setTimeout(() => setRecentCommand(null), 3000)
       } else {
         throw new Error("Failed to submit feedback")
       }
     } catch (error) {
       console.error("Error submitting feedback:", error)
-      // Show error message (you could add a toast notification here)
-      setRecentCommand("Failed to submit feedback. Please try again.")
+      setRecentCommand(t('feedback.submissionFailed'))
       setTimeout(() => setRecentCommand(null), 3000)
     } finally {
       setIsSubmittingFeedback(false)
@@ -1043,221 +1394,345 @@ export function AnimatedAIChat() {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full mix-blend-normal filter blur-[128px] animate-pulse delay-700" />
         <div className="absolute top-1/4 right-1/3 w-64 h-64 bg-fuchsia-500/10 rounded-full mix-blend-normal filter blur-[128px] animate-pulse delay-1000" />
       </div>
-      <div className="w-full max-w-2xl mx-auto relative">
-        <motion.div
-          className="relative z-10 space-y-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          <div className="text-center space-y-3">
+
+      {/* Chat History Button */}
+      <motion.button
+        onClick={() => setIsChatHistoryModalOpen(true)}
+        className="fixed top-6 right-6 p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-white/20 transition-all z-50"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <MessageSquare className="w-5 h-5 text-white/70" />
+      </motion.button>
+
+      <div className="w-full max-w-4xl mx-auto relative flex flex-col h-screen pb-40">
+        {/* Welcome Screen */}
+        <AnimatePresence>
+          {showWelcomeScreen && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-block"
+              className="flex-1 flex items-center justify-center mb-auto"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
             >
-              <h1 className="text-3xl font-medium tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white/90 to-white/40 pb-1">
-                How can I help?
-              </h1>
               <motion.div
-                className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "100%", opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.8 }}
-              />
-            </motion.div>
-            <motion.p
-              className="text-sm text-white/40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              Type your question below and I will do my best to assist you.
-            </motion.p>
-          </div>
-
-          <motion.div
-            className="relative backdrop-blur-2xl bg-white/[0.02] rounded-xl border border-white/[0.05] shadow-2xl"
-            initial={{ scale: 0.98 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            <AnimatePresence>
-              {showCommandPalette && (
-                <motion.div
-                  ref={commandPaletteRef}
-                  className="absolute left-4 right-4 bottom-full mb-2 backdrop-blur-xl bg-black/90 rounded-xl z-50 shadow-lg border border-white/10 overflow-hidden"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 5 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <div className="py-1 bg-black/95">
-                    {commandSuggestions.map((suggestion, index) => (
-                      <motion.div
-                        key={suggestion.prefix}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 text-xs transition-colors cursor-pointer",
-                          activeSuggestion === index ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5",
-                        )}
-                        onClick={() => selectCommandSuggestion(index)}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.03 }}
-                      >
-                        <div className="w-5 h-5 flex items-center justify-center text-white/60">{suggestion.icon}</div>
-                        <div className="font-medium">{suggestion.label}</div>
-                        <div className="text-white/40 text-xs ml-1">{suggestion.prefix}</div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="p-4">
-              <Textarea
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => {
-                  setValue(e.target.value)
-                  adjustHeight()
-                }}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setInputFocused(true)}
-                onBlur={() => setInputFocused(false)}
-                placeholder="Ask aira a question..."
-                containerClassName="w-full"
-                className={cn(
-                  "w-full px-4 py-3",
-                  "resize-none",
-                  "bg-transparent",
-                  "border-none",
-                  "text-white/90 text-sm",
-                  "focus:outline-none",
-                  "placeholder:text-white/40",
-                  "min-h-[60px]",
-                )}
-                style={{
-                  overflow: "hidden",
-                }}
-                showRing={false}
-              />
-            </div>
-
-            <AnimatePresence>
-              {attachments.length > 0 && (
-                <motion.div
-                  className="px-4 pb-3 flex gap-2 flex-wrap"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  {attachments.map((file, index) => (
+                className="relative z-10 space-y-4 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                <div className="space-y-3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                    className="inline-block"
+                  >
+                    <h1 className="text-3xl font-medium tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white/90 to-white/40 pb-1">
+                      {t('chat.welcome')}
+                    </h1>
                     <motion.div
-                      key={index}
-                      className="flex items-center gap-2 text-xs bg-white/[0.03] py-1.5 px-3 rounded-xl text-white/70"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: "100%", opacity: 1 }}
+                      transition={{ delay: 0.5, duration: 0.8 }}
+                    />
+                  </motion.div>
+                  <motion.p
+                    className="text-sm text-white/40"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {t('chat.welcomeSubtitle')}
+                  </motion.p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Current Chat */}
+        <AnimatePresence>
+          {!showWelcomeScreen && (
+            <motion.div
+              className="flex-1 flex flex-col min-h-0 py-6 mb-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Chat Messages */}
+              <div
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto space-y-4 mb-6 pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+              >
+                {currentChat.map((message, index) => (
+                  <motion.div
+                    key={message.id}
+                    className={cn("flex gap-3", message.type === "user" ? "justify-start" : "justify-end")}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    {message.type === "user" && (
+                      <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-blue-400" />
+                      </div>
+                    )}
+
+                    <div
+                      className={cn(
+                        "max-w-[70%] rounded-xl p-3",
+                        message.type === "user"
+                          ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+                          : message.error
+                          ? "bg-red-500/10 border border-red-500/20 text-red-400"
+                          : "bg-white/5 text-white/90 border border-white/10",
+                      )}
                     >
-                      <span>{file}</span>
-                      <button
-                        onClick={() => handleDeleteAttachment(index, file)}
-                        className="text-white/40 hover:text-white transition-colors rounded-full p-0.5"
-                      >
-                        <XIcon className="w-3 h-3" />
-                      </button>
+                      {message.isTyping ? (
+                        <div className="flex items-center gap-2">
+                          <TypingDots />
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          
+                          {/* Message metadata */}
+                          {message.type === "ai" && !message.error && (
+                            <div className="flex items-center justify-between text-xs text-white/40 mt-2">
+                              <div className="flex items-center gap-3">
+                                {message.confidence && (
+                                  <span>Confidence: {Math.round(message.confidence * 100)}%</span>
+                                )}
+                                {message.processingTime && (
+                                  <span>{t('common.time')}: {message.processingTime.toFixed(2)}s</span>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                {message.sources && (
+                                  <button
+                                    onClick={() => handleViewSources(message.sources!)}
+                                    className="text-xs text-violet-400 hover:text-violet-300 transition-colors underline"
+                                  >
+                                    {t('dialog.sources')} ({message.sources.length})
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          <div
+                            className={cn(
+                              "text-xs mt-2 opacity-60",
+                              message.type === "user" ? "text-left" : "text-right",
+                            )}
+                          >
+                            {formatMessageTime(message.timestamp)}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {message.type === "ai" && (
+                      <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-violet-400" />
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Input Area */}
+        <motion.div
+          className="relative backdrop-blur-2xl bg-white/[0.02] rounded-2xl border border-white/[0.05] shadow-2xl"
+          initial={{ scale: 0.98 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <AnimatePresence>
+            {showCommandPalette && (
+              <motion.div
+                ref={commandPaletteRef}
+                className="absolute left-4 right-4 bottom-full mb-2 backdrop-blur-xl bg-black/90 rounded-xl z-50 shadow-lg border border-white/10 overflow-hidden"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 5 }}
+                transition={{ duration: 0.15 }}
+              >
+                <div className="py-1 bg-black/95">
+                  {commandSuggestions.map((suggestion, index) => (
+                    <motion.div
+                      key={suggestion.prefix}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 text-xs transition-colors cursor-pointer",
+                        activeSuggestion === index ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5",
+                      )}
+                      onClick={() => selectCommandSuggestion(index)}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.03 }}
+                    >
+                      <div className="w-5 h-5 flex items-center justify-center text-white/60">{suggestion.icon}</div>
+                      <div className="font-medium">{suggestion.label}</div>
+                      <div className="text-white/40 text-xs ml-1">{suggestion.prefix}</div>
                     </motion.div>
                   ))}
-                </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="p-4">
+            <Textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => {
+                setValue(e.target.value)
+                adjustHeight()
+              }}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              placeholder={t('chat.placeholder')}
+              containerClassName="w-full"
+              className={cn(
+                "w-full px-4 py-3",
+                "resize-none",
+                "bg-transparent",
+                "border-none",
+                "text-white/90 text-sm",
+                "focus:outline-none",
+                "placeholder:text-white/40",
+                "min-h-[60px]",
               )}
-            </AnimatePresence>
+              style={{
+                overflow: "hidden",
+              }}
+              showRing={false}
+            />
+          </div>
 
-            <div className="p-4 border-t border-white/[0.05] flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <motion.button
-                  type="button"
-                  onClick={handleAttachFile}
-                  whileTap={{ scale: 0.94 }}
-                  className="p-2 text-white/40 hover:text-white/90 rounded-xl transition-colors relative group"
-                >
-                  <Paperclip className="w-4 h-4" />
-                  <motion.span
-                    className="absolute inset-0 bg-white/[0.05] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
-                    layoutId="button-highlight"
-                  />
-                </motion.button>
-              </div>
+          <AnimatePresence>
+            {attachments.length > 0 && (
+              <motion.div
+                className="px-4 pb-3 flex gap-2 flex-wrap"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                {attachments.map((file, index) => (
+                  <motion.div
+                    key={index}
+                    className="flex items-center gap-2 text-xs bg-white/[0.03] py-1.5 px-3 rounded-xl text-white/70"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                  >
+                    <span>{file}</span>
+                    <button
+                      onClick={() => handleDeleteAttachment(index, file)}
+                      className="text-white/40 hover:text-white transition-colors rounded-full p-0.5"
+                    >
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
+          <div className="p-4 border-t border-white/[0.05] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
               <motion.button
                 type="button"
-                onClick={handleSendMessage}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={isTyping || !value.trim()}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-sm font-medium transition-all",
-                  "flex items-center gap-2",
-                  value.trim() ? "bg-white text-[#0A0A0B] shadow-lg shadow-white/10" : "bg-white/[0.05] text-white/40",
-                )}
+                onClick={handleAttachFile}
+                whileTap={{ scale: 0.94 }}
+                className="p-2 text-white/40 hover:text-white/90 rounded-xl transition-colors relative group"
               >
-                {isTyping ? (
-                  <LoaderIcon className="w-4 h-4 animate-[spin_2s_linear_infinite]" />
-                ) : (
-                  <SendIcon className="w-4 h-4" />
-                )}
-                <span>Send</span>
-              </motion.button>
-            </div>
-          </motion.div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {commandSuggestions.map((suggestion, index) => (
-              <motion.button
-                key={suggestion.prefix}
-                onClick={() => selectCommandSuggestion(index)}
-                className="flex items-center gap-2 px-3 py-2 bg-white/[0.02] hover:bg-white/[0.05] rounded-xl text-sm text-white/60 hover:text-white/90 transition-all relative group"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                {suggestion.icon}
-                <span>{suggestion.label}</span>
-                <motion.div
-                  className="absolute inset-0 border border-white/[0.05] rounded-xl"
-                  initial={false}
-                  animate={{
-                    opacity: [0, 1],
-                    scale: [0.98, 1],
-                  }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeOut",
-                  }}
+                <Paperclip className="w-4 h-4" />
+                <motion.span
+                  className="absolute inset-0 bg-white/[0.05] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                  layoutId="button-highlight"
                 />
               </motion.button>
-            ))}
+            </div>
+
+            <motion.button
+              type="button"
+              onClick={handleSendMessage}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              disabled={isTyping || !value.trim()}
+              className={cn(
+                "px-4 py-2 rounded-xl text-sm font-medium transition-all",
+                "flex items-center gap-2",
+                value.trim() ? "bg-white text-[#0A0A0B] shadow-lg shadow-white/10" : "bg-white/[0.05] text-white/40",
+              )}
+            >
+              {isTyping ? (
+                <LoaderIcon className="w-4 h-4 animate-[spin_2s_linear_infinite]" />
+              ) : (
+                <SendIcon className="w-4 h-4" />
+              )}
+              <span>{t('chat.send')}</span>
+            </motion.button>
           </div>
+        </motion.div>
+
+        {/* Command Suggestions - Always visible at bottom */}
+        <motion.div
+          className="flex flex-wrap items-center justify-center gap-2 mt-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          {commandSuggestions.map((suggestion, index) => (
+            <motion.button
+              key={suggestion.prefix}
+              onClick={() => selectCommandSuggestion(index)}
+              className="flex items-center gap-2 px-3 py-2 bg-white/[0.02] hover:bg-white/[0.05] rounded-xl text-sm text-white/60 hover:text-white/90 transition-all relative group"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              {suggestion.icon}
+              <span>{suggestion.label}</span>
+              <motion.div
+                className="absolute inset-0 border border-white/[0.05] rounded-xl"
+                initial={false}
+                animate={{
+                  opacity: [0, 1],
+                  scale: [0.98, 1],
+                }}
+                transition={{
+                  duration: 0.3,
+                  ease: "easeOut",
+                }}
+              />
+            </motion.button>
+          ))}
         </motion.div>
       </div>
 
       <AnimatePresence>
         {isTyping && (
           <motion.div
-            className="fixed bottom-8 left-1/2 mx-auto transform -translate-x-1/2 backdrop-blur-2xl bg-white/[0.02] rounded-full px-4 py-2 shadow-lg border border-white/[0.05]"
+            className="fixed bottom-8 mx-auto transform -translate-x-1/2 backdrop-blur-2xl bg-white/[0.02] rounded-full px-4 py-2 shadow-lg border border-white/[0.05]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-7 rounded-full bg-white/[0.05] flex items-center justify-center text-center">
-                <span className="text-xs font-medium text-white/90 mb-0.5">zap</span>
+                <span className="text-xs font-medium text-white/90 mb-0.5">aira</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-white/70">
-                <span>Thinking</span>
-                <TypingDots />
+                <span>{t('chat.thinking')}</span>
               </div>
             </div>
           </motion.div>
@@ -1267,7 +1742,9 @@ export function AnimatedAIChat() {
       <AnimatePresence>
         {recentCommand && (
           <motion.div
-            className="fixed bottom-20 left-1/2 mx-auto transform -translate-x-1/2 backdrop-blur-2xl bg-green-500/10 border border-green-500/20 rounded-full px-4 py-2 shadow-lg"
+            className={cn(
+              "fixed bottom-8 backdrop-blur-2xl bg-green-500/10 border border-green-500/20 rounded-full px-4 py-2 shadow-lg z-50",
+            )}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
@@ -1306,13 +1783,12 @@ export function AnimatedAIChat() {
         onFileUploaded={handleFileUploaded}
       />
 
-      {/* Delete Confirmation Modal */}
       <Dialog open={deleteConfirmation.isOpen} onOpenChange={(open) => !open && cancelDeleteAttachment()}>
         <DialogContent className="bg-black/95 border border-white/10 text-white max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white/90">Delete File</DialogTitle>
+            <DialogTitle className="text-white/90">{t('deleteConfirmation.title')}</DialogTitle>
             <DialogDescription className="text-white/60">
-              Are you sure you want to remove "{deleteConfirmation.fileName}" from your attachments?
+              {t('deleteConfirmation.description', { fileName: deleteConfirmation.fileName })}
             </DialogDescription>
           </DialogHeader>
 
@@ -1322,19 +1798,18 @@ export function AnimatedAIChat() {
               onClick={cancelDeleteAttachment}
               className="bg-transparent border-white/10 text-white/70 hover:bg-white/5 hover:text-white hover:border-white/20 transition-all rounded-xl"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={confirmDeleteAttachment}
               className="bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700 rounded-xl"
             >
-              Delete
+              {t('common.delete')}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Feedback Modal */}
       <FeedbackModal
         isOpen={isFeedbackModalOpen}
         onOpenChange={setIsFeedbackModalOpen}
@@ -1344,6 +1819,58 @@ export function AnimatedAIChat() {
         onSubmit={handleFeedbackSubmit}
         isSubmitting={isSubmittingFeedback}
       />
+
+      {/* Chat History Modal */}
+      <ChatHistoryModal
+        isOpen={isChatHistoryModalOpen}
+        onOpenChange={setIsChatHistoryModalOpen}
+        history={history}
+        loading={historyLoading}
+        error={historyError}
+      />
+
+      {/* Sources Modal */}
+      <Dialog open={isSourcesModalOpen} onOpenChange={setIsSourcesModalOpen}>
+        <DialogContent className="bg-black/95 border border-white/10 text-white max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white/90">{t('dialog.sources')}</DialogTitle>
+            <DialogDescription className="text-white/60">
+              {t('dialog.viewSources')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-6 space-y-4">
+            {selectedSources.map((source, index) => (
+              <div key={source.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-medium text-white/80">{source.title}</h3>
+                  {source.score && (
+                    <span className="text-xs text-white/40 bg-white/5 px-2 py-1 rounded">
+                      Score: {source.score.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap">{source.content}</p>
+                {source.documentId && (
+                  <div className="mt-2 text-xs text-white/40">
+                    Document ID: {source.documentId}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setIsSourcesModalOpen(false)}
+              className="bg-transparent border-white/10 text-white/70 hover:bg-white/5 hover:text-white hover:border-white/20 transition-all rounded-xl"
+            >
+              {t('common.close')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

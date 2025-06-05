@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -10,6 +10,7 @@ from ..models.documents import (
     DocumentResponse,
     DocumentStatus,
     FeedbackRequest,
+    QuestionRequest,
     QuestionResponse,
 )
 from ..services import DocumentService, QAService
@@ -199,10 +200,10 @@ async def delete_document(document_id: str):
 
 
 @app.post("/qa/ask", response_model=QuestionResponse)
-async def ask_question(question: str):
+async def ask_question(request: QuestionRequest):
     """Ask a question and get an answer based on uploaded documents"""
     try:
-        response = await qa_service.answer_question(question=question)
+        response = await qa_service.answer_question(question=request.question)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
