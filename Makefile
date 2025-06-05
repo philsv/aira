@@ -35,4 +35,4 @@ clean:
 
 # Run tests (add pytest to requirements.in if needed)
 test:
-	pytest tests/
+	PYTHONPATH=. pytest tests/

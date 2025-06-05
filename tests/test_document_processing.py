@@ -9,7 +9,6 @@ from aira.services.document_service import DocumentService
 from aira.models.documents import Document, DocumentStatus
 
 
-@pytest.mark.asyncio
 class TestDocumentProcessing:
     """Test suite for document processing functionality"""
 
@@ -31,6 +30,7 @@ class TestDocumentProcessing:
             ("invalid_file.txt", False),  # Should fail validation
         ],
     )
+    @pytest.mark.asyncio
     async def test_document_upload_and_processing(
         self, document_service, mock_pdf_content, filename, expected_processing
     ):
@@ -129,6 +129,7 @@ class TestDocumentProcessing:
             ("non-existent-id", False),
         ],
     )
+    @pytest.mark.asyncio
     async def test_get_document(self, document_service, document_id, should_exist):
         """Test document retrieval by ID"""
 
@@ -210,7 +211,6 @@ class TestDocumentProcessing:
 
     def test_text_processing_methods(self, document_service):
         """Test text processing utility methods"""
-
         # Test tokenization
         test_text = "This is a test sentence."
         tokens = document_service.tokenize(test_text)
@@ -290,7 +290,6 @@ This is a subsection."""
 
 
 # Integration test that can be run with actual services (optional)
-@pytest.mark.integration
 class TestDocumentProcessingIntegration:
     """Integration tests that require actual services"""
 
@@ -300,6 +299,8 @@ class TestDocumentProcessingIntegration:
     @pytest.mark.parametrize(
         "document_id", ["c6bc7200-6958-4ceb-b1a7-e92108eab93e"]  # Example document ID
     )
-    def test_real_pdf_processing(self, document_id):
+    @pytest.mark.asyncio
+    async def test_real_pdf_processing(self, document_id):
         """Test with real PDF processing (requires actual services)"""
-        DocumentService().process_document(document_id)
+        document_service = DocumentService()
+        await document_service.process_document(document_id)
