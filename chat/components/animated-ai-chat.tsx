@@ -98,6 +98,12 @@ export function AnimatedAIChat() {
 
   const { history, loading: historyLoading, error: historyError, refetch: refetchHistory } = useQAHistory()
 
+  // Track window dimensions for responsive positioning
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 0,
+    height: typeof window !== "undefined" ? window.innerHeight : 0,
+  })
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY })
@@ -109,22 +115,6 @@ export function AnimatedAIChat() {
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [setMousePosition])
-
-  {inputFocused && (
-    <motion.div
-      className="fixed w-[50rem] h-[50rem] rounded-full pointer-events-none z-0 opacity-[0.02] bg-gradient-to-r from-blue-500 via-fuchsia-500 to-indigo-500 blur-[96px]"
-      animate={{
-        x: mousePosition.x - 400,
-        y: mousePosition.y - 400,
-      }}
-      transition={{
-        type: "spring",
-        damping: 25,
-        stiffness: 150,
-        mass: 0.5,
-      }}
-    />
-  )}
 
   useEffect(() => {
     const fetchExistingDocumentsOnMount = async () => {
@@ -603,18 +593,25 @@ export function AnimatedAIChat() {
 
       {/* Interactive Mouse Effect */}
       {inputFocused && (
-        <motion.div
-          className="fixed w-[50rem] h-[50rem] rounded-full pointer-events-none z-0 opacity-[0.08] bg-gradient-to-r from-blue-500 via-fuchsia-200 to-indigo-500 blur-[96px]"
-          animate={{
-            x: mousePosition.x - 400,
-            y: mousePosition.y - 400,
-          }}
-          transition={{
-            type: "spring",
-            damping: 25,
-            stiffness: 150,
-            mass: 0.5,
-          }}
+      <motion.div
+        className="fixed rounded-full pointer-events-none z-0 opacity-[0.08] bg-gradient-to-r from-violet-500 via-fuchsia-200 to-indigo-500 blur-[96px]"
+        animate={{
+          x: mousePosition.x - windowDimensions.width / 2,
+          y: mousePosition.y - windowDimensions.height / 2,
+        }}
+        transition={{
+          type: "spring",
+          damping: 25,
+          stiffness: 150,
+          mass: 0.5,
+        }}
+        style={{
+          left: "20%",
+          top: "20%",
+          width: Math.max(windowDimensions.width, windowDimensions.height) * 1,
+          height: Math.max(windowDimensions.width, windowDimensions.height) * 1,
+          transform: `translate(-50%, -50%)`,
+        }}
         />
       )}
 
