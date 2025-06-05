@@ -1350,6 +1350,11 @@ export function AnimatedAIChat() {
       const sessionId = currentChat.find(m => m.type === 'ai' && m.content === feedbackData.answer)?.id || 
                        history.find(h => h.answer === feedbackData.answer)?.id
 
+      // Validate required fields
+      if (!feedbackData.question || !feedbackData.answer || rating === undefined || helpful === undefined) {
+        throw new Error("Missing required fields")
+      }
+
       const response = await fetch("/api/feedback", {
         method: "POST",
         headers: {

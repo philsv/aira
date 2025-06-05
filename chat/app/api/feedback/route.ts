@@ -1,9 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000'
+
 interface FeedbackData {
   question: string
   answer: string
-  comment: string
+  comment?: string  // Optional Comment
   rating: number
   helpful: boolean
   timestamp: string
@@ -13,7 +15,7 @@ interface FeedbackData {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { question, answer, comment, rating, helpful }: FeedbackData = body
+    const { question, answer, comment, rating, helpful, session_id }: FeedbackData = body
 
     // Validate required fields
     if (!question || !answer || !comment || rating === undefined || helpful === undefined) {
@@ -33,25 +35,38 @@ export async function POST(request: NextRequest) {
       rating,
       helpful,
       timestamp: new Date().toISOString(),
+      session_id,
     }
 
-    // In a real application, you would save this to a database
-    // For now, we'll just log it and return success
-    console.log("Feedback received:", feedbackData)
-
-    // Simulate some processing time
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Feedback submitted successfully",
-        id: `feedback_${Date.now()}`,
+    // Send feedback to backend
+    const response = await fetch(`${BACKEND_URL}/feedback`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      { status: 200 },
-    )
+      body: JSON.stringify({
+        ...feedbackData,
+        is_helpful: feedbackData.helpful,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Backend error:', errorText)
+      return NextResponse.json(
+        { error: 'Failed to submit feedback', details: errorText }, 
+        { status: response.status }
+      )
+    }
+
+    const data = await response.json()
+    return NextResponse.json(data)
+
   } catch (error) {
-    console.error("Error processing feedback:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('API proxy error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }, 
+      { status: 500 }
+    )
   }
 }
