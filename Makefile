@@ -1,4 +1,4 @@
-.PHONY: help install server clean test requirements
+.PHONY: help install deploy server clean test requirements
 
 # Default target
 help:
