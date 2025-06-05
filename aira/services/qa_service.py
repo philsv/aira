@@ -287,6 +287,33 @@ class QAService:
             )
             await conn.commit()
 
+    async def get_feedback_history(
+        self, limit: int = 10, offset: int = 0
+    ) -> list[FeedbackRequest]:
+        """Get feedback history from database"""
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(
+                """
+                SELECT session_id, question, answer, rating, comment, is_helpful 
+                FROM feedback 
+                ORDER BY timestamp DESC 
+                LIMIT ? OFFSET ?
+            """,
+                (limit, offset),
+            )
+            rows = await cursor.fetchall()
+            return [
+                FeedbackRequest(
+                    session_id=row[0],
+                    question=row[1],
+                    answer=row[2],
+                    rating=row[3],
+                    comment=row[4],
+                    is_helpful=row[5],
+                )
+                for row in rows
+            ]
+
     async def get_qa_history(self, limit: int = 10, offset: int = 0) -> list[QAHistory]:
         """Get question-answer history from database"""
         async with aiosqlite.connect(self.db_path) as conn:

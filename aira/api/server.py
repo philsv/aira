@@ -209,6 +209,16 @@ async def ask_question(request: QuestionRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/qa/history")
+async def get_qa_history(limit: int = 10, offset: int = 0):
+    """Get question-answer history"""
+    try:
+        history = await qa_service.get_qa_history(limit=limit, offset=offset)
+        return {"history": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/feedback")
 async def submit_feedback(feedback: FeedbackRequest):
     """Submit feedback for a question-answer pair"""
@@ -219,12 +229,14 @@ async def submit_feedback(feedback: FeedbackRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/qa/history")
-async def get_qa_history(limit: int = 10, offset: int = 0):
-    """Get question-answer history"""
+@app.get("/feedback")
+async def get_feedback(limit: int = 10, offset: int = 0):
+    """Get feedback history"""
     try:
-        history = await qa_service.get_qa_history(limit=limit, offset=offset)
-        return {"history": history}
+        feedback_history = await qa_service.get_feedback_history(
+            limit=limit, offset=offset
+        )
+        return {"feedback": feedback_history}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
