@@ -1,12 +1,7 @@
 import { generateFiles } from "fumadocs-openapi";
 
-const isProduction = process.env.NODE_ENV === "production";
-const input = isProduction
-  ? ["./openapi.json"]
-  : ["http://localhost:8000/openapi.json"];
-
 void generateFiles({
-  input,
+  input: "http://localhost:8000/openapi.json",
   output: "./content/docs/api",
   includeDescription: true,
 });
