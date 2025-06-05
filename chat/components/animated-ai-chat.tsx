@@ -1767,7 +1767,7 @@ export function AnimatedAIChat() {
 
       {inputFocused && (
         <motion.div
-          className="fixed w-[50rem] h-[50rem] rounded-full pointer-events-none z-0 opacity-[0.05] bg-gradient-to-r from-blue-500 via-fuchsia-500 to-indigo-500 blur-[96px]"
+          className="fixed w-[50rem] h-[50rem] rounded-full pointer-events-none z-0 opacity-[0.06] bg-gradient-to-r from-blue-500 via-fuchsia-500 to-indigo-500 blur-[96px]"
           animate={{
             x: mousePosition.x - 400,
             y: mousePosition.y - 400,
