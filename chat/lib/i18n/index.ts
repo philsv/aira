@@ -12,7 +12,7 @@ const translations: Record<Language, TranslationKeys> = {
 // Get language from environment variable or default to English
 export function getDefaultLanguage(): Language {
   const envLanguage = process.env.NEXT_PUBLIC_UI_LANGUAGE as Language
-  return envLanguage && envLanguage in translations ? envLanguage : 'de'
+  return envLanguage && envLanguage in translations ? envLanguage : 'en'
 }
 
 export function getTranslations(language: Language = getDefaultLanguage()): TranslationKeys {

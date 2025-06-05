@@ -1,8 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aira Chat
+
+An **Agentic Information Retrieval Assistant** - A modern AI-powered chat interface built with Next.js that enables intelligent document-based conversations with file upload capabilities, multilingual support, and advanced UI interactions.
+
+![Aira Chat Preview](public/app-preview.png)
+
+## Features
+
+- 🤖 **AI-Powered Chat**: Interactive conversations with an intelligent AI assistant
+- 📄 **Document Upload**: Support for PDF file uploads and document-based Q&A
+- 🌐 **Multilingual Support**: Built-in internationalization with multiple language support
+- 🎨 **Modern UI**: Beautiful, responsive interface with smooth animations using Framer Motion
+- 💾 **Chat History**: Persistent chat history with feedback system
+- 🔍 **Source Viewing**: View and reference source documents used in responses
+
+## Tech Stack
+
+- **Framework**: [Next.js 14](https://nextjs.org/) with App Router
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) with custom design system
+- **UI Components**: Custom component library with [Radix UI](https://radix-ui.com/) primitives
+- **Animations**: [Framer Motion](https://framer.com/motion/) for smooth interactions
+- **Type Safety**: TypeScript throughout the application
+- **Icons**: [Lucide React](https://lucide.dev/) icon library
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm, yarn, pnpm, or bun package manager
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/your-username/aira.git
+cd aira/chat
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+3. Set up environment variables:
+
+```bash
+cp .env.template .env
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
