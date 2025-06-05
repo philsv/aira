@@ -28,6 +28,8 @@ export const de: TranslationKeys = {
     historyDescription: "Sehen Sie sich Ihre vorherigen Gespräche und KI-Antworten an",
     noChatHistory: "Noch kein Chatverlauf",
     noChatHistoryDescription: "Starten Sie ein Gespräch, um Ihren Chatverlauf hier zu sehen",
+    loadingHistory: "Lade Chatverlauf...",
+    errorLoadingHistory: "Fehler beim Laden des Verlaufs",
   },
   
   // File upload

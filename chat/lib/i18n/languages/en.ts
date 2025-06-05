@@ -26,6 +26,8 @@ export const en = {
     historyDescription: "View your previous conversations and AI responses",
     noChatHistory: "No chat history yet",
     noChatHistoryDescription: "Start a conversation to see your chat history here",
+    loadingHistory: "Loading chat history...",
+    errorLoadingHistory: "Error loading history",
   },
   
   // File upload

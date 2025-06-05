@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useCallback, useEffect, useRef, useTransition } from "react"
 
 import { Button } from "@/components/ui/button"
+import { MarkdownRenderer } from './markdown-renderer'
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -813,12 +814,12 @@ function ChatHistoryModal({ isOpen, onOpenChange, history, loading, error }: Cha
           {loading ? (
             <div className="text-center py-8">
               <LoaderIcon className="w-8 h-8 animate-spin text-white/40 mx-auto mb-3" />
-              <p className="text-white/40">Loading chat history...</p>
+              <p className="text-white/40">{t('chat.loadingHistory')}</p>
             </div>
           ) : error ? (
             <div className="text-center py-8">
               <XIcon className="w-8 h-8 text-red-400 mx-auto mb-3" />
-              <p className="text-red-400 mb-2">Error loading history</p>
+              <p className="text-red-400 mb-2">{t('chat.errorLoadingHistory')}</p>
               <p className="text-white/40 text-sm">{error}</p>
             </div>
           ) : history.length === 0 ? (
@@ -870,8 +871,8 @@ function ChatHistoryModal({ isOpen, onOpenChange, history, loading, error }: Cha
                   {/* Answer */}
                   <div className="mb-3">
                     <div className="text-xs font-medium text-white/60 mb-1">{t('common.answer')}:</div>
-                    <div className="text-sm text-white/80 bg-white/5 rounded-lg p-2 max-h-32 overflow-y-auto whitespace-pre-wrap">
-                      {item.answer}
+                    <div className="text-sm text-white/80 bg-white/5 rounded-lg p-2 max-h-60 overflow-y-auto">
+                      <MarkdownRenderer content={item.answer} />
                     </div>
                   </div>
 
@@ -1504,7 +1505,11 @@ export function AnimatedAIChat() {
                         </div>
                       ) : (
                         <>
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          {message.type === "ai" ? (
+                            <MarkdownRenderer content={message.content} />
+                          ) : (
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          )}
                           
                           {/* Message metadata */}
                           {message.type === "ai" && !message.error && (
