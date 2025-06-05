@@ -6,6 +6,8 @@
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) package manager
+- Node.js 18+ (for frontend development)
+- npm or yarn package manager
 
 ### Installation
 
