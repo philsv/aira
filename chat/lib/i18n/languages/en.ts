@@ -44,7 +44,7 @@ export const en = {
     description: "Help us improve by rating this response",
     yourQuestion: "Your Question",
     aiAnswer: "AI Answer", 
-    yourFeedback: "Your Feedback",
+    yourFeedback: "Your Feedback (optional)",
     rating: "Rate this response",
     helpful: "Was this response helpful?",
     yesHelpful: "Yes, helpful",

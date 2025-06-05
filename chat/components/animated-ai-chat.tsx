@@ -1101,7 +1101,7 @@ export function AnimatedAIChat() {
 
         const hasHistory = chatHistory.length > 0 || history.length > 0
 
-        if (feedbackComment && hasHistory) {
+        if (hasHistory) {
           let lastChat
           if (chatHistory.length > 0) {
             lastChat = chatHistory[chatHistory.length - 1]
@@ -1117,7 +1117,7 @@ export function AnimatedAIChat() {
             setFeedbackData({
               question: lastChat.question,
               answer: lastChat.answer,
-              comment: feedbackComment || "",
+              comment: feedbackComment || "", // Allow empty comments
             })
 
             setIsFeedbackModalOpen(true)
@@ -1126,8 +1126,9 @@ export function AnimatedAIChat() {
             return
           }
         } else {
+          // Only show notification when there's no chat history, not when comment is empty
           setRecentCommand(t('commands.noPreviousMessagesNotification'))
-          setTimeout(() => setRecentCommand(null), 3000)
+          setTimeout(() => setRecentCommand(null), 5000)
           setValue("")
           adjustHeight(true)
           return

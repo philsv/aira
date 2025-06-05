@@ -46,7 +46,7 @@ export const de: TranslationKeys = {
     description: "Helfen Sie uns, uns zu verbessern, indem Sie diese Antwort bewerten",
     yourQuestion: "Ihre Frage",
     aiAnswer: "KI-Antwort",
-    yourFeedback: "Ihr Feedback", 
+    yourFeedback: "Ihr Feedback (optional)", 
     rating: "Bewerten Sie diese Antwort",
     helpful: "War diese Antwort hilfreich?",
     yesHelpful: "Ja, hilfreich",
