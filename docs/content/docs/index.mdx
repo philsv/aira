@@ -12,20 +12,163 @@ description: Agentic Information Retrieval Assistant - AI-powered document chat 
 Get up and running with Aira in minutes:
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/philsv/aira.git
 cd aira
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 make install
 ```
 
-### 3. Deploy the Application
+### 3. Environment Configuration
+
+Copy the environment template and configure your services:
+
+```bash
+cp .env.template .env
+```
+
+Edit the `.env` file with your service configurations:
+
+#### Required Environment Variables
+
+**OpenAI Configuration** (for embeddings):
+
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+EMBED_MODEL=text-embedding-ada-002
+MODEL_DIMENSIONS=1536
+```
+
+**xAI Configuration** (for chat completions):
+
+```bash
+XAI_API_KEY=your_xai_api_key_here
+XAI_MODEL=grok-3-mini
+```
+
+**Qdrant Vector Database**:
+
+```bash
+QDRANT_HOST=host.docker.internal
+QDRANT_PORT=6333
+QDRANT__TELEMETRY_DISABLED=true
+```
+
+**AWS S3 Storage**:
+
+```bash
+S3_BUCKET=your_s3_bucket_name
+S3_ACCESS_KEY=your_s3_access_key
+S3_SECRET_KEY=your_s3_secret_key
+S3_REGION=your_s3_region
+```
+
+**LangSmith Tracing** (optional):
+
+```bash
+LANGSMITH_API_KEY=your_langsmith_api_key
+LANGSMITH_PROJECT=aira-project
+```
+
+**Server Configuration**:
+
+```bash
+UVICORN_HOST=0.0.0.0
+UVICORN_PORT=8000
+```
+
+### 4. Deploy the Application
+
 ```bash
 make deploy
 ```
+
+## Setup Guide
+
+### Qdrant Vector Database
+
+Qdrant is used for storing and searching document embeddings. The [`Qdrant`](https://github.com/philsv/aira/blob/main/aira/services/qdrant_service.py) service handles:
+
+- Collection management
+- Document embedding storage via `upsert_points`
+- Semantic search functionality via `search`
+
+**Setup**:
+
+1. Qdrant runs automatically with Docker Compose
+2. Configure connection in `.env`:
+   ```bash
+   QDRANT_HOST=host.docker.internal
+   QDRANT_PORT=6333
+   ```
+
+### AWS S3 File Storage
+
+The [`S3`](https://github.com/philsv/aira/blob/main/aira/services/s3_upload.py) service manages document uploads and retrieval:
+
+- Secure file upload
+- Stream-based file retrieval for processing
+
+**Setup**:
+
+1. Create an S3 bucket in AWS
+   - Follow the [AWS S3 Getting Started Guide](https://docs.aws.amazon.com/AmazonS3/latest/userguide/GetStartedWithS3.html) to create a bucket.
+2. Create IAM credentials with S3 access
+   - Follow the [AWS IAM User Guide](https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html) to create a user with S3 permissions.
+3. Configure in `.env`:
+   ```bash
+   S3_BUCKET=your_bucket_name
+   S3_ACCESS_KEY=your_access_key
+   S3_SECRET_KEY=your_secret_key
+   S3_REGION=us-east-1
+   ```
+
+### OpenAI Embeddings
+
+Used by the [`DocumentService`](https://github.com/philsv/aira/blob/main/aira/services/document_service.py) for converting text chunks into vector embeddings:
+
+**Setup**:
+
+1. Get API key from OpenAI
+   - Sign up at [OpenAI](https://platform.openai.com/signup) and create an API key.
+2. Configure in `.env`:
+   ```bash
+   OPENAI_API_KEY=your_openai_key
+   EMBED_MODEL=text-embedding-ada-002
+   ```
+
+### xAI Chat Completions
+
+The [`QAService`](https://github.com/philsv/aira/blob/main/aira/services/qa_service.py) uses xAI for generating answers to user questions:
+
+**Setup**:
+
+1. Get API key from xAI
+   - Sign up at [xAI](https://accounts.x.ai/account) and create an API key.
+2. Configure in `.env`:
+   ```bash
+   XAI_API_KEY=your_xai_key
+   XAI_MODEL=grok-3-mini
+   ```
+
+### LangSmith Tracing (Optional)
+
+The [`setup_langsmith`](https://github.com/philsv/aira/blob/main/aira/services/langsmith_setup.py) function enables AI operation monitoring:
+
+**Setup**:
+
+1. Create account at LangSmith
+   - Sign up at [LangSmith](https://smith.langchain.com/) and create a tracing project.
+2. Configure in `.env`:
+   ```bash
+   LANGSMITH_API_KEY=your_langsmith_key
+   LANGSMITH_PROJECT=aira-project
+   ```
 
 ## Architecture Overview
 
@@ -33,13 +176,16 @@ Aira is built with a modern, scalable architecture designed for performance and 
 
 - **Frontend**: Next.js with TypeScript and Tailwind CSS for a responsive, modern UI
 - **Backend**: Python FastAPI server providing RESTful APIs
-
+- **Vector Database**: Qdrant for semantic search and document retrieval
+- **Storage**: AWS S3 for document storage
+- **AI Services**: OpenAI for embeddings, xAI for chat completions
+- **Monitoring**: LangSmith for AI operation tracing
 
 Learn more about the API Endpoints here:
 
 <Cards>
-  <Card 
-    title="Backend API" 
+  <Card
+    title="Backend API"
     description="Python FastAPI server with document processing and AI integration"
     href="/docs/api"
     icon="🔧"
