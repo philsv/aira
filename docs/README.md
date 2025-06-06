@@ -8,7 +8,7 @@ Run development server:
 npm run dev
 ```
 
-Open http://localhost:3005 with your browser to see the result.
+Open http://localhost:3006 with your browser to see the result.
 
 ## Explore
 

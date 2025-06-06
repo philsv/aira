@@ -195,6 +195,7 @@ cython_debug/
 # Folders
 /documents
 /data
+/qdrant_storage
 /.vscode
 /aira/utils
 

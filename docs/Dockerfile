@@ -30,33 +30,17 @@ RUN npm run build
 # Create a production image
 FROM base AS runner
 WORKDIR /app
-
-# Create a non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy package files and config files needed for production dependencies
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/source.config.ts ./
-COPY --from=builder /app/next.config.mjs ./
-COPY --from=builder /app/tsconfig.json ./
-
-# Install only production dependencies
-RUN npm ci --omit=dev && npm cache clean --force
+COPY . .
 
 # Copy the built application files
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/.source ./.source
-
-# Switch to non-root user
-USER nextjs
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/.source ./.source
 
 # Set environment variables for production
 ENV NODE_ENV=production
-ENV PORT=3005
 
 # Expose the port
-EXPOSE 3005
+EXPOSE 3007
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["next", "start", "-p", "3007"]

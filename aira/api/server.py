@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ..models.documents import DocumentResponse, DocumentStatus
 from ..models.qa import FeedbackRequest, QuestionRequest, QuestionResponse
+from ..models.health import HealthCheckResponse
 from ..services import DocumentService, QAService
 from ..services.langsmith_setup import setup_langsmith
 
@@ -65,13 +66,23 @@ logger = logging.getLogger(__name__)
 
 @app.get(
     "/",
-    response_model=dict,
+    response_model=HealthCheckResponse,
     name="Health Check",
     description="Health check endpoint to verify if the API is running",
+    operation_id="get_health_check",
     responses={
         200: {
             "description": "API is running successfully",
-            "content": {"application/json": {"example": {"status": "healthy"}}},
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "healthy",
+                        "message": "API is running successfully",
+                        "api_name": "Agentic Information Retrieval Assistant",
+                        "version": "0.1.0",
+                    }
+                }
+            },
         },
     },
     tags=["Health"],
@@ -83,12 +94,12 @@ async def health_check():
     Returns:
         dict: A dictionary containing status information about the API
     """
-    return {
-        "status": "healthy",
-        "message": "Aira API is running successfully",
-        "api_name": "Agentic Information Retrieval Assistant",
-        "version": "0.1.0",
-    }
+    return HealthCheckResponse(
+        status="healthy",
+        message="API is running successfully",
+        api_name="Agentic Information Retrieval Assistant",
+        version="0.1.0",
+    )
 
 
 @app.post(
@@ -96,6 +107,7 @@ async def health_check():
     response_model=DocumentResponse,
     name="Upload Document",
     description="Upload a document for processing",
+    operation_id="post_documents_upload",
     responses={
         200: {
             "description": "Document uploaded successfully",
@@ -200,6 +212,7 @@ async def upload_document(
     response_model=DocumentResponse,
     name="Upload Document Sync",
     description="Upload and process a document synchronously for debugging",
+    operation_id="post_documents_upload_sync",
     responses={
         200: {
             "description": "Document uploaded and processed successfully",
@@ -276,6 +289,7 @@ async def upload_document_sync(file: UploadFile = File(...)):
     response_model=dict,
     name="List Documents",
     description="List all uploaded documents",
+    operation_id="get_documents",
     responses={
         200: {
             "description": "List of documents",
@@ -323,6 +337,7 @@ async def list_documents():
     response_model=dict,
     name="Get Document Status",
     description="Get the processing status of a specific document",
+    operation_id="get_documents_by_id_status",
     responses={
         200: {
             "description": "Document status retrieved successfully",
@@ -378,6 +393,7 @@ async def get_document_status(document_id: str):
     response_model=dict,
     name="Delete Document",
     description="Delete a specific document",
+    operation_id="delete_documents_by_id",
     responses={
         200: {
             "description": "Document deleted successfully",
@@ -420,6 +436,7 @@ async def delete_document(document_id: str):
     response_model=QuestionResponse,
     name="Ask Question",
     description="Ask a question to an AI model based on uploaded documents",
+    operation_id="post_qa_ask",
     responses={
         200: {
             "description": "Question answered successfully",
@@ -477,6 +494,7 @@ async def ask_question(request: QuestionRequest):
     response_model=dict,
     name="Get QA History",
     description="Get the history of question-answer pairs",
+    operation_id="get_qa_history",
     responses={
         200: {
             "description": "QA history retrieved successfully",
@@ -524,6 +542,7 @@ async def get_qa_history(limit: int = 10, offset: int = 0):
     response_model=dict,
     name="Submit Feedback",
     description="Submit feedback for a question-answer pair",
+    operation_id="post_feedback",
     responses={
         200: {
             "description": "Feedback submitted successfully",
@@ -568,6 +587,7 @@ async def submit_feedback(feedback: FeedbackRequest):
     response_model=dict,
     name="Get Feedback History",
     description="Get the history of feedback submissions",
+    operation_id="get_feedback",
     responses={
         200: {
             "description": "Feedback history retrieved successfully",
@@ -616,6 +636,7 @@ async def get_feedback(limit: int = 10, offset: int = 0):
     response_model=dict,
     name="Delete Feedback",
     description="Delete feedback for a specific session",
+    operation_id="delete_feedback_by_session_id",
     responses={
         200: {
             "description": "Feedback deleted successfully",
