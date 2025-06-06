@@ -7,8 +7,9 @@ Aira is a demo AI-powered document chat application that allows users to interac
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) package manager
 - Node.js 18+ (for frontend development)
-- npm or yarn package manager
+- npm package manager
 - Docker or Docker Desktop (Windows users)
+- Make (for managing tasks)
 
 ## 🚀 Quick Start
 
