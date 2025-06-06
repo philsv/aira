@@ -90,6 +90,14 @@ Ensure Docker is running, then build and start the application:
 make deploy
 ```
 
+## 🛠️ Development
+
+Start the backend server locally:
+
+```bash
+make server
+```
+
 ### Dependency Management
 
 This project uses `uv` for fast Python package management. Dependencies are defined in [requirements.in](requirements.in).
@@ -98,14 +106,6 @@ To update dependencies:
 
 ```bash
 make requirements
-```
-
-## 🛠️ Development
-
-Start the backend server locally:
-
-```bash
-make server
 ```
 
 ### Testing
