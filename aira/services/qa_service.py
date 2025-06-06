@@ -10,7 +10,7 @@ import openai
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
 
-from ..models.documents import (
+from ..models.qa import (
     FeedbackRequest,
     FeedbackHistory,
     QAHistory,

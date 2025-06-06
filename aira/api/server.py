@@ -6,13 +6,8 @@ import uvicorn
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from ..models.documents import (
-    DocumentResponse,
-    DocumentStatus,
-    FeedbackRequest,
-    QuestionRequest,
-    QuestionResponse,
-)
+from ..models.documents import DocumentResponse, DocumentStatus
+from ..models.qa import FeedbackRequest, QuestionRequest, QuestionResponse
 from ..services import DocumentService, QAService
 from ..services.langsmith_setup import setup_langsmith
 
@@ -74,7 +69,10 @@ logger = logging.getLogger(__name__)
     name="Health Check",
     description="Health check endpoint to verify if the API is running",
     responses={
-        200: {"description": "API is running successfully"},
+        200: {
+            "description": "API is running successfully",
+            "content": {"application/json": {"example": {"status": "healthy"}}},
+        },
     },
     tags=["Health"],
 )
@@ -99,9 +97,46 @@ async def health_check():
     name="Upload Document",
     description="Upload a document for processing",
     responses={
-        400: {"description": "Invalid file type"},
-        409: {"description": "Document with the same filename already exists"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Document uploaded successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "document_id": "12345",
+                        "filename": "example.pdf",
+                        "status": "processed",
+                        "message": "Document uploaded successfully and is being processed",
+                        "upload_time": "2023-10-01T12:00:00Z",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Invalid file type",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Only PDF documents are supported"}
+                }
+            },
+        },
+        409: {
+            "description": "Document with the same filename already exists",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Document with filename 'example.pdf' already exists"
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Documents"],
 )
@@ -110,13 +145,11 @@ async def upload_document(
 ):
     """Upload and process a document"""
     try:
-        # Validate file type
         if not file.filename or not file.filename.lower().endswith((".pdf")):
             raise HTTPException(
                 status_code=400, detail="Only PDF documents are supported"
             )
 
-        # Check for duplicate filename
         if await document_service.check_duplicate_filename(file.filename):
             raise HTTPException(
                 status_code=409,
@@ -126,11 +159,10 @@ async def upload_document(
         # Process document in background
         document = await document_service.upload_document(file)
 
-        # Add logging for background task
         logger.info(f"Starting background processing for document {document.id}")
 
-        # Create a wrapper function for better error handling
         async def process_document_with_error_handling(doc_id: str):
+            """Wrapper function to handle errors during document processing"""
             try:
                 await document_service.process_document(doc_id)
                 logger.info(f"Document {doc_id} processed successfully")
@@ -143,7 +175,6 @@ async def upload_document(
                     document = await document_service.get_document(doc_id)
                     if document:
                         document.status = DocumentStatus.ERROR
-                        # Save the updated status if your service has a method for it
                 except Exception as update_error:
                     logger.error(f"Failed to update document status: {update_error}")
 
@@ -170,22 +201,57 @@ async def upload_document(
     name="Upload Document Sync",
     description="Upload and process a document synchronously for debugging",
     responses={
-        400: {"description": "Invalid file type"},
-        409: {"description": "Document with the same filename already exists"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Document uploaded and processed successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "document_id": "12345",
+                        "filename": "example.pdf",
+                        "status": "processed",
+                        "message": "Document processed successfully",
+                        "upload_time": "2023-10-01T12:00:00Z",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Invalid file type",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Only PDF documents are supported"}
+                }
+            },
+        },
+        409: {
+            "description": "Document with the same filename already exists",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Document with filename 'example.pdf' already exists"
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
-    tags=["Documents"],
+    tags=["Debugging"],
 )
 async def upload_document_sync(file: UploadFile = File(...)):
     """Upload and process a document synchronously for debugging"""
     try:
-        # Validate file type
         if not file.filename or not file.filename.lower().endswith((".pdf")):
             raise HTTPException(
                 status_code=400, detail="Only PDF documents are supported"
             )
 
-        # Check for duplicate filename
         if await document_service.check_duplicate_filename(file.filename):
             raise HTTPException(
                 status_code=409,
@@ -211,7 +277,35 @@ async def upload_document_sync(file: UploadFile = File(...)):
     name="List Documents",
     description="List all uploaded documents",
     responses={
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "List of documents",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "documents": [
+                            {
+                                "id": "12345",
+                                "filename": "example.pdf",
+                                "file_path": "/path/to/s3/example.pdf",
+                                "status": "processed",
+                                "upload_time": "2023-10-01T12:00:00Z",
+                                "processed_time": "2023-10-01T12:05:00Z",
+                                "file_size": 204800,
+                                "content_preview": "This is a preview of the document content.",
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Documents"],
 )
@@ -230,8 +324,34 @@ async def list_documents():
     name="Get Document Status",
     description="Get the processing status of a specific document",
     responses={
-        404: {"description": "Document not found"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Document status retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "document_id": "12345",
+                        "status": "processed",
+                        "filename": "example.pdf",
+                        "upload_time": "2023-10-01T12:00:00Z",
+                        "processed_time": "2023-10-01T12:05:00Z",
+                    }
+                }
+            },
+        },
+        404: {
+            "description": "Document not found",
+            "content": {
+                "application/json": {"example": {"detail": "Document not found"}}
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Documents"],
 )
@@ -259,8 +379,28 @@ async def get_document_status(document_id: str):
     name="Delete Document",
     description="Delete a specific document",
     responses={
-        404: {"description": "Document not found"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Document deleted successfully",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Document deleted successfully"}
+                }
+            },
+        },
+        404: {
+            "description": "Document not found",
+            "content": {
+                "application/json": {"example": {"detail": "Document not found"}}
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Documents"],
 )
@@ -281,8 +421,45 @@ async def delete_document(document_id: str):
     name="Ask Question",
     description="Ask a question to an AI model based on uploaded documents",
     responses={
-        400: {"description": "Invalid question format"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Question answered successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "question": "What is the capital of France?",
+                        "answer": "The capital of France is Paris.",
+                        "confidence_score": 0.85,
+                        "sources": [
+                            {
+                                "point_id": "point123",
+                                "document_id": "12345",
+                                "document_name": "example.pdf",
+                                "content": "This is a preview of the document content.",
+                                "score": 0.85,
+                            }
+                        ],
+                        "processing_time": 1.23,
+                        "session_id": "session123",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Invalid question format",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Question must be a non-empty string"}
+                }
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Question Answering"],
 )
@@ -301,7 +478,35 @@ async def ask_question(request: QuestionRequest):
     name="Get QA History",
     description="Get the history of question-answer pairs",
     responses={
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "QA history retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "history": [
+                            {
+                                "id": "session123",
+                                "question": "What is the capital of France?",
+                                "answer": "The capital of France is Paris.",
+                                "timestamp": "2023-10-01T12:00:00Z",
+                                "document_ids": ["12345" "23456"],
+                                "confidence_score": 0.85,
+                                "processing_time": 1.23,
+                                "feedback_rating": 4,
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Question Answering"],
 )
@@ -320,8 +525,32 @@ async def get_qa_history(limit: int = 10, offset: int = 0):
     name="Submit Feedback",
     description="Submit feedback for a question-answer pair",
     responses={
-        400: {"description": "Invalid feedback format"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Feedback submitted successfully",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Feedback submitted successfully"}
+                }
+            },
+        },
+        400: {
+            "description": "Invalid feedback format",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Feedback must include session_id, question, and rating"
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Feedback"],
 )
@@ -340,7 +569,34 @@ async def submit_feedback(feedback: FeedbackRequest):
     name="Get Feedback History",
     description="Get the history of feedback submissions",
     responses={
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Feedback history retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "feedback": [
+                            {
+                                "session_id": "session123",
+                                "question": "What is the capital of France?",
+                                "answer": "The capital of France is Paris.",
+                                "rating": 4,
+                                "comments": "Good answer, but could include more details.",
+                                "is_helpful": True,
+                                "timestamp": "2023-10-01T12:00:00Z",
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Feedback"],
 )
@@ -361,8 +617,28 @@ async def get_feedback(limit: int = 10, offset: int = 0):
     name="Delete Feedback",
     description="Delete feedback for a specific session",
     responses={
-        404: {"description": "Feedback not found"},
-        500: {"description": "Internal server error"},
+        200: {
+            "description": "Feedback deleted successfully",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Feedback deleted successfully"}
+                }
+            },
+        },
+        404: {
+            "description": "Feedback not found",
+            "content": {
+                "application/json": {"example": {"detail": "Feedback not found"}}
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An unexpected error occurred"}
+                }
+            },
+        },
     },
     tags=["Feedback"],
 )
