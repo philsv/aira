@@ -30,7 +30,9 @@ openai.api_key = OPENAI_API_KEY
 
 # Constants for text processing
 ENC = tiktoken.get_encoding("cl100k_base")  # matches tiktoken for gpt models
-HEADING_PATTERN = re.compile(r"^(?:[IVX]+\.|[A-Z]\.|[0-9]+\.)\s+", flags=re.MULTILINE)
+HEADING_PATTERN = re.compile(
+    r"^(?:[IVX]+\.|[A-Z]\.|[0-9]+\.|[0-9]+)\s+", flags=re.MULTILINE
+)
 MAX_TOKENS_PER_CHUNK = 1500
 
 
