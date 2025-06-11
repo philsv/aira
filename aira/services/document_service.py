@@ -163,9 +163,7 @@ class DocumentService:
         return "\n".join(all_text)
 
     def split_by_recursive_characters(self, full_text: str) -> list[str]:
-        """
-        Split text into chunks based on headings using LangChain's text splitter.
-        """
+        """Split text into chunks based on recursive character splitting."""
         # Create documents from the text
         docs = self.text_splitter.create_documents([full_text])
 
