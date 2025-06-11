@@ -2,7 +2,6 @@ import asyncio
 import io
 import logging
 import os
-import re
 import aiosqlite
 import uuid
 from datetime import datetime
@@ -13,6 +12,7 @@ import pdfplumber  # type: ignore[import]
 import tiktoken  # type: ignore[import]
 from fastapi import UploadFile
 from qdrant_client.http.models import PointStruct  # Type hint
+from langchain_text_splitters import RecursiveCharacterTextSplitter  # type: ignore[import]
 
 from ..models.documents import Document, DocumentStatus
 from .qdrant_service import Qdrant
@@ -30,16 +30,21 @@ openai.api_key = OPENAI_API_KEY
 
 # Constants for text processing
 ENC = tiktoken.get_encoding("cl100k_base")  # matches tiktoken for gpt models
-HEADING_PATTERN = re.compile(
-    r"^(?:[IVX]+\.|[A-Z]\.|[0-9]+\.|[0-9]+)\s+", flags=re.MULTILINE
-)
-MAX_TOKENS_PER_CHUNK = 1500
+MAX_TOKENS_PER_CHUNK = 2000
+CHUNK_OVERLAP = 200  # 10% overlap for context preservation
 
 
 class DocumentService:
     def __init__(self, db_path: str = "data/documents.db"):
         self.db_path = db_path
         self.documents_db: dict[str, Document] = {}
+        # Initialize text splitter
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=MAX_TOKENS_PER_CHUNK,
+            chunk_overlap=CHUNK_OVERLAP,
+            length_function=len,
+            is_separator_regex=False,
+        )
 
     async def _init_database(self):
         """Initialize SQLite database with documents table."""
@@ -157,29 +162,16 @@ class DocumentService:
                 all_text.append(text)
         return "\n".join(all_text)
 
-    def split_by_headings(self, full_text: str) -> list[str]:
+    def split_by_recursive_characters(self, full_text: str) -> list[str]:
         """
-        Splits on lines that appear to start with a Roman numeral (I., II., etc.),
-        a single letter with period (A., B., etc.), or digits with period (1., 2., etc.) or
-        digits without period (1, 2, etc.).
+        Split text into chunks based on headings using LangChain's text splitter.
         """
-        # Find all heading positions
-        spans: list[tuple[int, int]] = []
-        last_end = 0
-        for m in HEADING_PATTERN.finditer(full_text):
-            start = m.start()
-            if start != last_end:
-                spans.append((last_end, start))
-            last_end = start
-        # Append the final span
-        spans.append((last_end, len(full_text)))
+        # Create documents from the text
+        docs = self.text_splitter.create_documents([full_text])
 
-        # Extract chunks
-        chunks = []
-        for s, e in spans:
-            chunk = full_text[s:e].strip()
-            if chunk:
-                chunks.append(chunk)
+        # Extract the text content from each document
+        chunks = [doc.page_content for doc in docs]
+
         return chunks
 
     def tokenize(self, text: str) -> list[int]:
@@ -190,16 +182,19 @@ class DocumentService:
         """Convert a list of token IDs back to a string."""
         return ENC.decode(tokens)
 
-    def chunk_by_token_limit(self, sections: list[str], max_tokens: int) -> list[str]:
-        """Chunk sections into smaller pieces based on token limit."""
+    def ensure_token_limit(self, chunks: list[str], max_tokens: int) -> list[str]:
+        """
+        Ensure chunks don't exceed token limit.
+        Split chunks that are too large based on token count.
+        """
         final_chunks: list[str] = []
-        for sec in sections:
-            tokens = self.tokenize(sec)
+
+        for chunk in chunks:
+            tokens = self.tokenize(chunk)
             if len(tokens) <= max_tokens:
-                final_chunks.append(sec)
+                final_chunks.append(chunk)
             else:
-                # break into consecutive slices of length <= max_tokens,
-                # with some overlap (e.g. 50 tokens) to preserve context
+                # Split large chunks further with overlap
                 overlap = 50
                 start_idx = 0
                 while start_idx < len(tokens):
@@ -211,6 +206,7 @@ class DocumentService:
                         start_idx = 0
                     if end_idx == len(tokens):
                         break
+
         return final_chunks
 
     def embed_chunks(self, chunks: list[str], model: str) -> list[list[float]]:
@@ -276,11 +272,13 @@ class DocumentService:
         try:
             full_text = self.extract_full_text(pdf_stream)
 
-            sections = self.split_by_headings(full_text)
-            logging.info(f"Identified {len(sections)} top-level sections.")
+            # Use a recursive character text splitter to create initial chunks
+            chunks = self.split_by_recursive_characters(full_text)
+            logging.info(f"LangChain splitter created {len(chunks)} initial chunks.")
 
-            chunks = self.chunk_by_token_limit(sections, MAX_TOKENS_PER_CHUNK)
-            logging.info(f"Total chunks after token-splitting: {len(chunks)}")
+            # Ensure chunks don't exceed token limits
+            chunks = self.ensure_token_limit(chunks, MAX_TOKENS_PER_CHUNK)
+            logging.info(f"Total chunks after token validation: {len(chunks)}")
 
             # OpenAI embeddings in thread pool
             embeddings = await loop.run_in_executor(
