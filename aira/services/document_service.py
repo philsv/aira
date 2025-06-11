@@ -160,7 +160,8 @@ class DocumentService:
     def split_by_headings(self, full_text: str) -> list[str]:
         """
         Splits on lines that appear to start with a Roman numeral (I., II., etc.),
-        a single letter with period (A., B., etc.), or digits with period (1., 2., etc.)
+        a single letter with period (A., B., etc.), or digits with period (1., 2., etc.) or
+        digits without period (1, 2, etc.).
         """
         # Find all heading positions
         spans: list[tuple[int, int]] = []
